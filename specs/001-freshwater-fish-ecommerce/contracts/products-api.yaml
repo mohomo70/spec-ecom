@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: Freshwater Fish Ecommerce - Products API
+  version: 1.0.0
+  description: API contracts for product catalog management
+
+servers:
+  - url: https://api.freshwater-fish-shop.com/v1
+    description: Production server
+  - url: http://localhost:8000/api/v1
+    description: Development server
+
+paths:
+  /products:
+    get:
+      summary: List products with filtering and pagination
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: Full-text search query
+        - name: category
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            minimum: 0
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            minimum: 0
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        - name: min_tank_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, name_asc, name_desc, popularity]
+            default: name_asc
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductSummary'
+
+    post:
+      summary: Create new product (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+
+  /products/{id}:
+    get:
+      summary: Get product details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '404':
+          description: Product not found
+
+    put:
+      summary: Update product (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdate'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+
+    delete:
+      summary: Delete product (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Product deleted
+
+  /categories:
+    get:
+      summary: List product categories
+      responses:
+        '200':
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+
+components:
+  schemas:
+    ProductSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        species_name:
+          type: string
+          maxLength: 100
+        scientific_name:
+          type: string
+          maxLength: 150
+          nullable: true
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        stock_quantity:
+          type: integer
+          minimum: 0
+        is_available:
+          type: boolean
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        min_tank_size_gallons:
+          type: integer
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+            ph_range_min:
+              type: number
+              format: decimal
+              minimum: 0
+              maximum: 14
+              nullable: true
+            ph_range_max:
+              type: number
+              format: decimal
+              minimum: 0
+              maximum: 14
+              nullable: true
+            temperature_range_min:
+              type: integer
+              nullable: true
+            temperature_range_max:
+              type: integer
+              nullable: true
+            max_size_inches:
+              type: number
+              format: decimal
+              nullable: true
+            lifespan_years:
+              type: integer
+              nullable: true
+            diet_type:
+              type: string
+              enum: [herbivore, carnivore, omnivore]
+              nullable: true
+            compatibility_notes:
+              type: string
+              nullable: true
+            care_instructions:
+              type: string
+            additional_images:
+              type: array
+              items:
+                type: string
+                format: uri
+            seo_title:
+              type: string
+              maxLength: 60
+              nullable: true
+            seo_description:
+              type: string
+              maxLength: 160
+              nullable: true
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+
+    ProductCreate:
+      type: object
+      required:
+        - species_name
+        - description
+        - price
+        - stock_quantity
+        - difficulty_level
+        - min_tank_size_gallons
+        - care_instructions
+      properties:
+        species_name:
+          type: string
+          maxLength: 100
+        scientific_name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+        stock_quantity:
+          type: integer
+          minimum: 0
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        min_tank_size_gallons:
+          type: integer
+        ph_range_min:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 14
+        ph_range_max:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 14
+        temperature_range_min:
+          type: integer
+        temperature_range_max:
+          type: integer
+        max_size_inches:
+          type: number
+          format: decimal
+        lifespan_years:
+          type: integer
+        diet_type:
+          type: string
+          enum: [herbivore, carnivore, omnivore]
+        compatibility_notes:
+          type: string
+        care_instructions:
+          type: string
+        image_url:
+          type: string
+          format: uri
+        additional_images:
+          type: array
+          items:
+            type: string
+            format: uri
+        seo_title:
+          type: string
+          maxLength: 60
+        seo_description:
+          type: string
+          maxLength: 160
+        categories:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ProductUpdate:
+      allOf:
+        - $ref: '#/components/schemas/ProductCreate'
+        - type: object
+          properties:
+            is_available:
+              type: boolean
+
+    CategorySummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+
+    Category:
+      allOf:
+        - $ref: '#/components/schemas/CategorySummary'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+            image_url:
+              type: string
+              format: uri
+              nullable: true
+            parent_category:
+              $ref: '#/components/schemas/CategorySummary'
+              nullable: true
+            display_order:
+              type: integer
+            is_active:
+              type: boolean
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
