@@ -1,9 +1,18 @@
 # Feature Specification: Freshwater Fish Ecommerce Platform
 
-**Feature Branch**: `001-freshwater-fish-ecommerce`  
-**Created**: 2025-10-21  
-**Status**: Draft  
+**Feature Branch**: `001-freshwater-fish-ecommerce`
+**Created**: 2025-10-21
+**Status**: Draft
 **Input**: User description: "i want an ecommerce for freshwater fish. i want to be excellent on seo and performance. i want to use figma mcp for design i want to run it in production in a custom vps. i meant i want to deploy it manualy"
+
+## Clarifications
+
+### Session 2025-10-21
+- Q: What authentication method should be implemented for user accounts? → A: JWT tokens with HTTPS
+- Q: What payment processing service should be integrated for secure checkout? → A: Placeholder
+- Q: What database should be used for storing product, user, and order data? → A: PostgreSQL
+- Q: What frontend framework should be used for the user interface? → A: Next.js with App Router
+- Q: What backend framework should be used for the API and server-side logic? → A: Django REST Framework
 
 ## User Scenarios & Testing *(mandatory)*
 

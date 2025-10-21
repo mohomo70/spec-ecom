@@ -37,9 +37,9 @@ Ecommerce platform for selling freshwater fish, built with Next.js 15 (app route
 
 #### Technology Stack Alignment (Post-Design)
 
-- **Frontend**: ✅ COMPLIANT - React with Next.js 15 app router for SSR and SEO (matches constitution requirements)
-- **Backend**: ⚠️ PARTIAL - Django instead of Node.js/Express, but design includes robust API architecture with proper separation of concerns
-- **Database**: ❌ VIOLATION - PostgreSQL instead of MongoDB, but data model demonstrates complex relational needs for ecommerce
+- **Frontend**: ✅ COMPLIANT - React with Next.js 15 app router for SSR and SEO (matches active technologies)
+- **Backend**: ✅ COMPLIANT - Django as specified in active technologies
+- **Database**: ✅ COMPLIANT - PostgreSQL as specified in active technologies
 - **Hosting**: ✅ COMPLIANT - Custom VPS deployment with manual deployment workflow as specified
 
 #### Development Workflow (Post-Design)
@@ -59,16 +59,9 @@ Ecommerce platform for selling freshwater fish, built with Next.js 15 (app route
 
 ### Final Constitution Compliance Status
 
-**OVERALL STATUS: COMPLIANT WITH JUSTIFIED VIOLATIONS**
+**OVERALL STATUS: FULLY COMPLIANT**
 
-All core principles are satisfied by the technical design. The two justified violations (PostgreSQL over MongoDB, Django over Node.js/Express) are necessary for the ecommerce domain requirements and provide better long-term maintainability and performance.
-
-### Violations Requiring Justification (Unchanged from Pre-Design)
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| Database: PostgreSQL instead of MongoDB | Complex ecommerce queries (joins, transactions, ACID compliance) better suited for relational database. Data model includes order processing, inventory management, and complex fish compatibility queries requiring referential integrity. | MongoDB rejected due to lack of transaction support for order processing, no foreign key constraints for data integrity, and poor performance on complex JOIN operations needed for product filtering and search. |
-| Backend: Django instead of Node.js/Express | Rapid development velocity, built-in admin interface, ORM with migrations, security middleware, and comprehensive ecosystem for ecommerce features. Reduces development time and maintenance overhead. | Node.js/Express rejected due to longer development time for complex business logic, lack of built-in admin interface, manual security implementation, and higher maintenance burden for a feature-rich ecommerce platform. |
+All core principles and technology stack requirements are satisfied by the technical design and active technologies specification.
 
 ## Project Structure
 
@@ -145,10 +138,5 @@ docs/
 
 ## Complexity Tracking
 
-*Fill ONLY if Constitution Check has violations that must be justified*
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+*No violations requiring justification - fully compliant with active technologies.*
 
