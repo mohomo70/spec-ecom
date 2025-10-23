@@ -42,7 +42,7 @@ export default function CheckoutPage() {
             <CardDescription>Please log in to complete your purchase</CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/auth/login">
+            <Link href="/login">
               <Button>Login to Continue</Button>
             </Link>
           </CardContent>

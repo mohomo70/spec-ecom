@@ -7,41 +7,98 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
-  phone: string;
+  phone?: string;
   date_joined: string;
   is_active: boolean;
 }
 
+interface UserProfile {
+  experience_level: string;
+  preferred_tank_size?: number;
+  newsletter_subscribed: boolean;
+  marketing_emails: boolean;
+}
+
 interface AuthState {
   user: User | null;
-  token: string | null;
+  profile: UserProfile | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  login: (user: User, token: string) => void;
+  isLoading: boolean;
+
+  // Actions
+  login: (user: User, profile: UserProfile, accessToken: string, refreshToken: string) => void;
   logout: () => void;
-  updateUser: (user: Partial<User>) => void;
+  updateProfile: (profile: UserProfile) => void;
+  updateUser: (user: User) => void;
+  setLoading: (loading: boolean) => void;
+  refreshTokens: (accessToken: string, refreshToken?: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
+      profile: null,
+      accessToken: null,
+      refreshToken: null,
       isAuthenticated: false,
+      isLoading: false,
 
-      login: (user: User, token: string) => {
-        set({ user, token, isAuthenticated: true });
-        localStorage.setItem('auth_token', token);
+      login: (user: User, profile: UserProfile, accessToken: string, refreshToken: string) => {
+        set({
+          user,
+          profile,
+          accessToken,
+          refreshToken,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+
+        // Store tokens in localStorage for API client
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', accessToken);
+        }
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
-        localStorage.removeItem('auth_token');
+        set({
+          user: null,
+          profile: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+
+        // Clear tokens from localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
       },
 
-      updateUser: (userData: Partial<User>) => {
-        const currentUser = get().user;
-        if (currentUser) {
-          set({ user: { ...currentUser, ...userData } });
+      updateProfile: (profile: UserProfile) => {
+        set({ profile });
+      },
+
+      updateUser: (user: User) => {
+        set({ user });
+      },
+
+      setLoading: (loading: boolean) => {
+        set({ isLoading: loading });
+      },
+
+      refreshTokens: (accessToken: string, refreshToken?: string) => {
+        set({
+          accessToken,
+          refreshToken: refreshToken || get().refreshToken,
+        });
+
+        // Update localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', accessToken);
         }
       },
     }),
@@ -49,7 +106,9 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
+        profile: state.profile,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
