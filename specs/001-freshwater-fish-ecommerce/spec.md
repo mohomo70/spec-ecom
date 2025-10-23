@@ -91,6 +91,87 @@ As a returning customer, I want to create an account, track my orders, and view 
 - **Order**: Represents a purchase transaction, linking users to products with quantities, pricing, shipping details, and status tracking
 - **Category**: Organizes fish products by type (e.g., community fish, cichlids, catfish) for easier browsing
 
+## Implementation Learnings & Experiences *(Phase 1 & 2 Complete)*
+
+### Technology Stack Validation
+
+**✅ Django REST Framework + Next.js 15**: Excellent choice for rapid development
+- Django provides robust admin interface, ORM, and security features out-of-the-box
+- Next.js App Router enables excellent SEO and performance optimizations
+- JWT authentication with django-rest-framework-simplejwt works seamlessly
+- PostgreSQL integration via psycopg2 is reliable and performant
+
+**✅ Docker for Database**: Essential for development environment consistency
+- Docker Compose simplifies PostgreSQL setup with proper user credentials
+- Volume persistence ensures data survives container restarts
+- Easy to replicate across development and production environments
+
+### Development Environment Setup
+
+**VPS Deployment Learnings**:
+- `0.0.0.0` binding necessary for external access on VPS
+- Environment variables critical for API endpoint configuration
+- CORS configuration essential for frontend-backend communication
+
+**Database Configuration**:
+- Docker PostgreSQL requires explicit user creation and database setup
+- Django migrations work perfectly with Dockerized PostgreSQL
+- Connection string management through environment variables
+
+### API Design & Integration
+
+**RESTful API Patterns**:
+- `/api/v1/` prefix provides clear API versioning
+- JWT authentication with refresh tokens implemented
+- CORS middleware properly configured for cross-origin requests
+- Comprehensive error handling and validation
+
+**Frontend-Backend Communication**:
+- Environment variables (`NEXT_PUBLIC_API_URL`) for flexible API endpoints
+- Automatic token attachment for authenticated requests
+- Proper error handling for network failures
+
+### Performance & SEO Considerations
+
+**Next.js Optimizations**:
+- Turbopack provides fast development compilation
+- Automatic code splitting and optimization
+- Built-in SEO metadata API support
+- Responsive design with Tailwind CSS
+
+**Database Performance**:
+- Proper indexing through Django migrations
+- Prefetch_related for efficient queries
+- UUID primary keys for scalability
+
+### Development Workflow
+
+**Local Development**:
+- Concurrent running of Django (`python manage.py runserver`) and Next.js (`npm run dev`)
+- Hot reloading works excellently for both frameworks
+- Docker Compose for database management
+- Clear separation of concerns between frontend and backend
+
+**Debugging & Monitoring**:
+- Django debug mode provides detailed error pages
+- Next.js development server shows compilation status
+- API request/response logging helps with integration debugging
+
+### Security Implementation
+
+**Authentication & Authorization**:
+- JWT tokens with secure storage in localStorage
+- Password validation and user profile management
+- Admin interface for content management
+- CORS restrictions for production safety
+
+### Challenges & Solutions
+
+**Port Conflicts**: Solved by identifying and killing conflicting processes
+**Database Connection**: Resolved by ensuring Docker container is running and credentials match
+**API Endpoints**: Fixed by updating environment variables for VPS deployment
+**CORS Issues**: Configured properly in Django settings
+
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
@@ -101,3 +182,38 @@ As a returning customer, I want to create an account, track my orders, and view 
 - **SC-004**: System maintains 99.9% uptime during business hours
 - **SC-005**: 95% of users successfully complete their intended purchase without technical issues
 - **SC-006**: Average page load time remains under 2 seconds across all devices
+
+### Implementation Milestones Achieved
+
+- **✅ Phase 1 (Setup)**: Project structure, dependencies, and environment configured
+- **✅ Phase 2 (Foundation)**: Complete backend API, database models, frontend setup, and integration
+- **✅ MVP Ready**: User Story 1 fully functional for browse and purchase workflow
+- **✅ VPS Deployment**: Manual deployment process validated and working
+- **✅ Sample Data**: Comprehensive product catalog with 12 fish species across 6 categories
+- **✅ API Integration**: Frontend successfully consuming paginated Django REST Framework responses
+
+### Data Integration Learnings
+
+**Django REST Framework Pagination**:
+- DRF returns paginated responses with `{count, next, previous, results}` structure
+- Frontend must extract `data.results` to access actual records
+- Default pagination provides 20 items per page, suitable for product listings
+
+**Sample Data Strategy**:
+- Created realistic freshwater fish catalog with accurate care requirements
+- Included SEO-optimized titles and descriptions for each product
+- Added proper categorization (Community Fish, Cichlids, Tetras & Barbs, etc.)
+- Set appropriate pricing ($1.99 - $15.99) and stock levels (25-300 units)
+- Included detailed care information (pH, temperature, tank size, difficulty)
+
+**API Response Handling**:
+- Both products and categories APIs return paginated data
+- Frontend properly handles loading states and data extraction
+- Search and filter functionality works with query parameters
+- CORS properly configured for cross-origin requests from VPS
+
+**Development Data Management**:
+- Django management command for loading sample data
+- Avoids database truncation issues with `get_or_create`
+- Includes admin user creation for content management
+- Data structure supports all planned features (cart, orders, user profiles)

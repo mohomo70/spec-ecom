@@ -23,7 +23,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: products = [], isLoading } = useQuery({
+  const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', search, selectedCategory],
     queryFn: () => apiClient.getProducts(
       Object.fromEntries(
@@ -32,10 +32,15 @@ export default function ProductsPage() {
     ),
   });
 
-  const { data: categories = [] } = useQuery({
+  const products = (productsData as any)?.results || [];
+  console.log(products);
+
+  const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiClient.getCategories(),
   });
+
+  const categories = (categoriesData as any)?.results || [];
 
   if (isLoading) {
     return (
