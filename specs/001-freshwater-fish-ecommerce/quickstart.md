@@ -24,7 +24,16 @@ nvm use 18.17
 # Install Python and pip
 # (Installation varies by OS - use system package manager)
 
-# Install PostgreSQL
+# Install Docker and Docker Compose
+# Ubuntu/Debian:
+sudo apt update && sudo apt install docker.io docker-compose
+
+# macOS (using Homebrew):
+brew install docker docker-compose
+
+# Windows: Download from docker.com
+
+# Alternative: Install PostgreSQL directly (if not using Docker)
 # Ubuntu/Debian:
 sudo apt update && sudo apt install postgresql postgresql-contrib
 
@@ -58,7 +67,7 @@ npm install
 cd backend
 
 # Create virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install Python dependencies
@@ -118,6 +127,18 @@ npm run dev
 
 ### 4. Database Configuration
 
+#### Option 1: Using Docker Compose (Recommended)
+
+```bash
+# Start PostgreSQL with Docker Compose
+docker compose up -d postgres
+
+# Wait for database to be ready
+sleep 10
+```
+
+#### Option 2: Direct PostgreSQL Installation
+
 Create a PostgreSQL database and user:
 
 ```sql
@@ -150,6 +171,24 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ## Development Workflow
 
 ### Starting the Development Environment
+
+#### Option 1: Using Docker Compose (Recommended)
+
+```bash
+# Start all services
+docker compose up -d
+
+# Terminal 1: Start Django backend
+cd backend
+source venv/bin/activate
+python manage.py runserver
+
+# Terminal 2: Start Next.js frontend
+cd frontend
+npm run dev
+```
+
+#### Option 2: Manual Setup
 
 ```bash
 # Terminal 1: Start Django backend
@@ -220,7 +259,11 @@ python manage.py createsuperuser
 
 **Database Connection Error:**
 ```bash
-# Check PostgreSQL status
+# If using Docker Compose
+docker compose ps
+docker compose logs postgres
+
+# If using direct PostgreSQL
 sudo systemctl status postgresql  # Linux
 brew services list | grep postgresql  # macOS
 
@@ -263,35 +306,38 @@ cd backend
 python manage.py clear_cache
 ```
 
-## Deployment Preparation
+## Development on VPS
 
-### Environment Variables for Production
+### Running in Development Mode
 
-**Backend (.env.production):**
-```env
-DATABASE_URL=postgresql://user:pass@host:5432/db
-SECRET_KEY=production-secret-key
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
-```
+Since you're developing directly on your VPS, you can run the application in development mode:
 
-**Frontend (.env.production):**
-```env
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com/v1
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
-```
+1. **Start PostgreSQL** (using Docker):
+   ```bash
+   docker compose up -d postgres
+   ```
 
-### Build Commands
+2. **Start Django backend**:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   python manage.py runserver 0.0.0.0:8000
+   ```
 
-```bash
-# Frontend production build
-cd frontend
-npm run build
+3. **Start Next.js frontend**:
+   ```bash
+   cd frontend
+   npm run dev -- -H 0.0.0.0
+   ```
 
-# Backend static files
-cd backend
-python manage.py collectstatic --noinput
-```
+4. **Access your application**:
+   - Frontend: `http://your-vps-ip:3000`
+   - Backend API: `http://your-vps-ip:8000`
+   - Admin: `http://your-vps-ip:8000/admin/`
+
+### Environment Configuration
+
+Your `.env` file is already configured for development with your VPS IP (45.140.147.81) included in ALLOWED_HOSTS and CORS settings.
 
 ## Next Steps
 
@@ -300,6 +346,7 @@ python manage.py collectstatic --noinput
 3. **Review API Documentation**: Check `/api/docs/` for detailed endpoint information
 4. **Run the Test Suite**: Ensure all tests pass before making changes
 5. **Set Up Monitoring**: Configure logging and error tracking for production
+6. **Database Management with Docker**: Use `docker compose down` to stop services, `docker compose up -d` to restart
 
 ## Support
 
