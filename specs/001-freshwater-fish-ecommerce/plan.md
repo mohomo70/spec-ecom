@@ -18,7 +18,7 @@ Ecommerce platform for selling freshwater fish, built with Next.js 15 (app route
 **Target Platform**: Web application (desktop and mobile)
 **Project Type**: Web application (frontend + backend)
 **Performance Goals**: Page load <2s, Google PageSpeed 90+, 99.9% uptime
-**Constraints**: SEO-optimized, mobile-first, high performance, manual VPS deployment
+**Constraints**: SEO-optimized, mobile-first, high performance, manual VPS deployment with Docker and Nginx
 **Scale/Scope**: Initial launch with catalog of freshwater fish, user accounts, orders, search/filter functionality
 
 ## Constitution Check
@@ -40,14 +40,14 @@ Ecommerce platform for selling freshwater fish, built with Next.js 15 (app route
 - **Frontend**: ✅ COMPLIANT - React with Next.js 15 app router for SSR and SEO (matches active technologies)
 - **Backend**: ✅ COMPLIANT - Django as specified in active technologies
 - **Database**: ✅ COMPLIANT - PostgreSQL as specified in active technologies
-- **Hosting**: ✅ COMPLIANT - Custom VPS deployment with manual deployment workflow as specified
+- **Hosting**: ✅ COMPLIANT - Custom VPS deployment with Docker and Nginx for production deployment as specified
 
 #### Development Workflow (Post-Design)
 
 - **Agile methodology**: ✅ COMPLIANT - Speckit workflow with clear phases and artifacts
 - **Code reviews**: ✅ COMPLIANT - Quickstart guide includes development setup and testing instructions
 - **Automated testing**: ✅ COMPLIANT - Jest for frontend, Django test framework for backend, API contracts enable contract testing
-- **CI/CD**: ✅ COMPLIANT - Manual VPS deployment with build processes defined
+- **CI/CD**: ✅ COMPLIANT - Manual VPS deployment with Docker and Nginx for production deployment
 - **Audits**: ✅ COMPLIANT - Performance goals defined (PageSpeed 90+, <2s load time), SEO monitoring capabilities included
 
 #### Design Artifacts Quality Check
@@ -132,9 +132,15 @@ database/
 docs/
 ├── api/
 └── deployment/
+
+docker/
+├── docker-compose.prod.yml    # Production Docker Compose with Nginx
+├── nginx.conf                 # Nginx configuration for reverse proxy
+└── Dockerfile.backend         # Django production Dockerfile
+└── Dockerfile.frontend        # Next.js production Dockerfile
 ```
 
-**Structure Decision**: Web application structure with separate frontend (Next.js) and backend (Django) directories. Frontend uses Next.js 15 app router with route groups for organization. Backend follows Django project structure. Database migrations and schema in separate directory for deployment flexibility.
+**Structure Decision**: Web application structure with separate frontend (Next.js) and backend (Django) directories. Frontend uses Next.js 15 app router with route groups for organization. Backend follows Django project structure. Database migrations and schema in separate directory for deployment flexibility. Docker directory added for production deployment with Nginx reverse proxy and containerized services.
 
 ## Complexity Tracking
 
