@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api";
@@ -24,7 +24,7 @@ interface Product {
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -335,5 +335,29 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-20 bg-gray-200 rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   );
 }

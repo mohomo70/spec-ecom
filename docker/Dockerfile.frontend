@@ -1,0 +1,62 @@
+# Multi-stage build for optimized Next.js production image
+FROM node:18-alpine as base
+
+# Install dependencies for building native modules (including lightningcss)
+RUN apk add --no-cache libc6-compat python3 make g++ build-base
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci && npm cache clean --force
+
+# Build stage
+FROM base as builder
+
+# Copy source code
+COPY frontend/ .
+
+# Copy environment file
+COPY frontend/.env.local .env.local
+
+# Build application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine as production
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create app directory
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.ts ./next.config.ts
+
+# Switch to non-root user
+USER nextjs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { \
+        process.exit(res.statusCode === 200 ? 0 : 1) \
+    }).on('error', () => process.exit(1))"
+
+# Expose port
+EXPOSE 3000
+
+# Start application
+CMD ["npm", "start"]

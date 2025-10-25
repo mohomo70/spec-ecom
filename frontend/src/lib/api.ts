@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://45.140.147.81:8000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 class ApiClient {
   private baseURL: string;
