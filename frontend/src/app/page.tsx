@@ -1,25 +1,17 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import HeaderNav from "@/components/HeaderNav";
 
 export default function HomePage() {
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Freshwater Fish Store</h1>
-          <nav className="flex gap-4">
-            <Link href="/products">
-              <Button variant="ghost">Products</Button>
-            </Link>
-            <Link href="/cart">
-              <Button variant="ghost">Cart (0)</Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button>Login</Button>
-            </Link>
-          </nav>
+          <HeaderNav />
         </div>
       </header>
 
