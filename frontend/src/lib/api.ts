@@ -33,6 +33,13 @@ class ApiClient {
     const response = await fetch(url, config);
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - redirect to login
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+      }
       const error = await response.json().catch(() => ({ message: 'Network error' }));
       throw new Error(error.message || `HTTP ${response.status}`);
     }
@@ -42,13 +49,13 @@ class ApiClient {
 
   private getAuthToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
+    return localStorage.getItem('token');
   }
 
   // Products
   async getProducts(params?: Record<string, string>) {
     const queryString = params ? `?${new URLSearchParams(params)}` : '';
-    return this.request(`/products/${queryString}`);
+    return this.request(`/products${queryString}`);
   }
 
   async getProduct(id: string) {
@@ -73,7 +80,7 @@ class ApiClient {
   }
 
   // Auth
-  async register(data: { username: string; email: string; password: string; password_confirm: string }) {
+  async register(data: { username: string; email: string; password: string; password_confirm: string; first_name?: string; last_name?: string }) {
     return this.request('/auth/register/', {
       method: 'POST',
       body: JSON.stringify(data),

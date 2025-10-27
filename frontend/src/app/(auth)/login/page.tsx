@@ -17,8 +17,9 @@ interface LoginForm {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { setUser } = useAuthStore();
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -29,17 +30,11 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: (data: LoginForm) => apiClient.login(data),
     onSuccess: (response: any) => {
-      login(
-        response.user,
-        response.profile || {
-          experience_level: 'beginner',
-          newsletter_subscribed: false,
-          marketing_emails: false,
-        },
-        response.tokens.access,
-        response.tokens.refresh
-      );
-      router.push('/');
+      if (response.token && response.user) {
+        localStorage.setItem('token', response.token);
+        setUser(response.user);
+        router.push('/profile');
+      }
     },
     onError: (error: any) => {
       setError(error.message || 'Login failed');
@@ -94,19 +89,28 @@ export default function LoginPage() {
               <label htmlFor="password" className="block text-sm font-medium mb-1">
                 Password
               </label>
-              <input
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: {
-                    value: 8,
-                    message: "Password must be at least 8 characters",
-                  },
-                })}
-                type="password"
-                id="password"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                  })}
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm text-gray-600 hover:text-gray-900"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}

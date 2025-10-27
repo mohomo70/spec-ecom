@@ -7,8 +7,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from ..serializers import UserSerializer, UserProfileSerializer, UserRegistrationSerializer
+from django.contrib.auth import get_user_model
+from ..serializers import UserSerializer, UserRegistrationSerializer
+
+User = get_user_model()
+
+
+class AuthProfileSerializer(UserSerializer):
+    """Serializer for user profile with additional fields."""
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name', 'role', 'date_joined']
+        read_only_fields = ['id', 'role', 'date_joined']
 
 
 class UserRegistrationView(APIView):
@@ -22,11 +32,8 @@ class UserRegistrationView(APIView):
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
             return Response({
-                'user': UserSerializer(user).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
+                'user': AuthProfileSerializer(user).data,
+                'token': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -46,20 +53,25 @@ class UserLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user = authenticate(request, username=email, password=password)
-        if user:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'user': UserSerializer(user).data,
-                'tokens': {
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                }
-            })
-        return Response(
-            {'error': 'Invalid credentials'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        if not user.check_password(password):
+            return Response(
+                {'error': 'Invalid credentials'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': AuthProfileSerializer(user).data,
+            'token': str(refresh.access_token),
+        })
 
 
 class UserProfileView(APIView):
@@ -68,29 +80,12 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user_serializer = UserSerializer(request.user)
-        profile_serializer = UserProfileSerializer(request.user.userprofile)
-        return Response({
-            'user': user_serializer.data,
-            'profile': profile_serializer.data
-        })
+        serializer = AuthProfileSerializer(request.user)
+        return Response(serializer.data)
 
     def patch(self, request):
-        user_serializer = UserSerializer(request.user, data=request.data.get('user', {}), partial=True)
-        profile_serializer = UserProfileSerializer(
-            request.user.userprofile,
-            data=request.data.get('profile', {}),
-            partial=True
-        )
-
-        if user_serializer.is_valid() and profile_serializer.is_valid():
-            user_serializer.save()
-            profile_serializer.save()
-            return Response({
-                'user': user_serializer.data,
-                'profile': profile_serializer.data
-            })
-        return Response({
-            'user_errors': user_serializer.errors,
-            'profile_errors': profile_serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AuthProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
