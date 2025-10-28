@@ -1,9 +1,12 @@
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import HeaderNav from "@/components/HeaderNav";
+import { useAuthStore } from "@/lib/stores/auth";
+
 
 export default function HomePage() {
+  const { user } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-background">
@@ -11,7 +14,24 @@ export default function HomePage() {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Freshwater Fish Store</h1>
-          <HeaderNav />
+          <nav className="flex gap-4">
+            <Link href="/products">
+              <Button variant="ghost">Products</Button>
+            </Link>
+            {/* <Link href="/cart">
+              <Button variant="ghost">Cart (0)</Button>
+            </Link> */}
+            {user ? (
+                <Link href="/profile">
+                  <Button>Profile</Button>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <Button>Login</Button>
+                </Link>
+              )}
+          </nav>
+
         </div>
       </header>
 
