@@ -48,7 +48,7 @@ services:
       - DB_PORT=5432
       - REDIS_URL=redis://redis:6379/0
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-www.mhmdev.ir,mhmdev.ir,45.140.147.81,localhost,127.0.0.1}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://www.mhmdev.ir,https://mhmdev.ir,http://localhost:3000}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://mhmdev.ir,http://www.mhmdev.ir,https://mhmdev.ir,https://www.mhmdev.ir,http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy
