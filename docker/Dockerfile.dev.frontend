@@ -1,23 +1,19 @@
 # Development Dockerfile for Next.js frontend with live reload
 FROM node:18-alpine
 
-# Install dependencies for building native modules
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN apk add --no-cache libc6-compat python3 make g++ build-base
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
 COPY frontend/package*.json ./
 
-# Install all dependencies (including dev dependencies)
 RUN npm ci
 
-# Copy source code (will be overridden by volume mount in dev)
 COPY frontend/ .
 
-# Expose port
 EXPOSE 3000
 
-# Start development server
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0"]

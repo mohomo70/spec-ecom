@@ -94,7 +94,6 @@ function ProductsContent() {
   });
 
   const products = (productsData as any)?.results || [];
-  console.log(products);
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
