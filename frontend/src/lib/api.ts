@@ -7,7 +7,7 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
@@ -41,7 +41,9 @@ class ApiClient {
         }
       }
       const error = await response.json().catch(() => ({ message: 'Network error' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      const httpError: any = new Error(error.message || `HTTP ${response.status}`);
+      httpError.response = { status: response.status, data: error };
+      throw httpError;
     }
 
     return response.json();
@@ -148,3 +150,57 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
+
+const api = {
+  get: async (endpoint: string) => {
+    try {
+      const data = await apiClient.request<unknown>(endpoint, { method: 'GET' });
+      return { status: 200, data };
+    } catch (error: any) {
+      throw { response: { status: error.response?.status || 500, data: error.response?.data || error } };
+    }
+  },
+  post: async (endpoint: string, body?: unknown) => {
+    try {
+      const data = await apiClient.request<unknown>(endpoint, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+      return { status: 201, data };
+    } catch (error: any) {
+      throw { response: { status: error.response?.status || 500, data: error.response?.data || error } };
+    }
+  },
+  patch: async (endpoint: string, body?: unknown) => {
+    try {
+      const data = await apiClient.request<unknown>(endpoint, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+      return { status: 200, data };
+    } catch (error: any) {
+      throw { response: { status: error.response?.status || 500, data: error.response?.data || error } };
+    }
+  },
+  put: async (endpoint: string, body?: unknown) => {
+    try {
+      const data = await apiClient.request<unknown>(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
+      return { status: 200, data };
+    } catch (error: any) {
+      throw { response: { status: error.response?.status || 500, data: error.response?.data || error } };
+    }
+  },
+  delete: async (endpoint: string) => {
+    try {
+      await apiClient.request<unknown>(endpoint, { method: 'DELETE' });
+      return { status: 200, data: null };
+    } catch (error: any) {
+      throw { response: { status: error.response?.status || 500, data: error.response?.data || error } };
+    }
+  },
+};
+
+export { api };
