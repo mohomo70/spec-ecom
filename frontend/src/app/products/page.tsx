@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchInput } from "@/components/search/SearchInput";
 import { FilterSidebar } from "@/components/search/FilterSidebar";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Search } from "lucide-react";
 import Link from "next/link";
+import { useAuthStore } from "@/lib/stores/auth";
 
 interface Product {
   id: string;
@@ -27,6 +28,10 @@ interface Product {
 function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
+  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+  
+  const userName = user?.first_name || user?.email?.split("@")[0] || "Guest";
 
   // Initialize state from URL parameters
   const [search, setSearch] = useState(searchParams.get('search') || "");
@@ -130,7 +135,34 @@ function ProductsContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="relative bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
+          <div className="absolute top-20 right-20 w-24 h-24 bg-white rounded-full"></div>
+          <div className="absolute bottom-10 left-1/3 w-20 h-20 bg-white rounded-full"></div>
+        </div>
+        <div className="relative container mx-auto px-4 h-[172px] flex items-end justify-center">
+          <div className="relative w-full max-w-md mb-1">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Search For Fish"
+              value={headerSearchQuery}
+              onChange={(e) => setHeaderSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setSearch(headerSearchQuery);
+                }
+              }}
+              className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border-0 shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 text-gray-900 placeholder-gray-400"
+            />
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 pb-32">
       {/* Filter Sidebar - Mobile Overlay */}
       <FilterSidebar
         isOpen={showFilters}
@@ -142,18 +174,17 @@ function ProductsContent() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Our Fish Collection</h1>
 
         {/* Search and Filter */}
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="flex-1">
+          {/* <div className="flex-1">
             <SearchInput
               value={search}
               onChange={setSearch}
               placeholder="Search fish species..."
               suggestions={searchSuggestions}
             />
-          </div>
+          </div> */}
 
           <div className="flex gap-2">
             <select
@@ -169,7 +200,7 @@ function ProductsContent() {
               ))}
             </select>
 
-            <Button
+            {/* <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
               className="lg:hidden"
@@ -185,13 +216,13 @@ function ProductsContent() {
             >
               <Filter className="h-4 w-4 mr-2" />
               Advanced Filters
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
 
       {/* Active Filters Display */}
-      {(search || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50 && v !== 14 && v !== 90)) && (
+      {/* {(search || Object.values(filters).some(v => v !== '' && v !== 0 && v !== 50 && v !== 14 && v !== 90)) && (
         <div className="mb-6 p-4 bg-muted rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-medium">Active Filters:</span>
@@ -249,7 +280,7 @@ function ProductsContent() {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -333,6 +364,45 @@ function ProductsContent() {
           <p className="text-muted-foreground">No products found.</p>
         </div>
       )}
+      </div>
+
+      {/* Footer */}
+      <footer className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="relative w-full mx-auto h-[115px]">
+          <svg 
+            className="absolute inset-0 w-full h-full"
+            style={{ filter: 'drop-shadow(0px -5px 22px rgba(0, 0, 0, 0.08))' }}
+            viewBox="0 0 376 115"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M 0 30 L 0 115 L 376 115 L 376 30 A 35 35 0 0 0 341 0 L 35 0 A 35 35 0 0 0 0 30 Z"
+              fill="#FFFFFF"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-end justify-center pb-4 z-10">
+            <nav className="flex items-center justify-center gap-16 w-full px-10">
+              <Link href="/" className="flex flex-col items-center gap-2.5">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium leading-[11.93px] text-blue-500" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>HOME</span>
+              </Link>
+              <Link href="/profile" className="flex flex-col items-center gap-2.5">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-medium leading-[11.93px] text-blue-400" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>PROFILE</span>
+              </Link>
+            </nav>
+          </div>
+        </div>
+     
+      </footer>
     </div>
   );
 }
@@ -340,20 +410,70 @@ function ProductsContent() {
 export default function ProductsPage() {
   return (
     <Suspense fallback={
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-20 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
+      <div className="min-h-screen bg-background">
+        <header className="relative bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
+            <div className="absolute top-20 right-20 w-24 h-24 bg-white rounded-full"></div>
+            <div className="absolute bottom-10 left-1/3 w-20 h-20 bg-white rounded-full"></div>
+          </div>
+          <div className="relative container mx-auto px-4 h-[172px] flex items-end justify-center">
+            <div className="relative w-full max-w-md mb-1">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
+              <div className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border-0 shadow-lg"></div>
+            </div>
+          </div>
+        </header>
+        <div className="container mx-auto px-4 py-8 pb-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
+        <footer className="fixed bottom-0 left-0 right-0 z-50">
+          <div className="relative w-full mx-auto h-[115px]">
+            <svg 
+              className="absolute inset-0 w-full h-full"
+              style={{ filter: 'drop-shadow(0px -5px 22px rgba(0, 0, 0, 0.08))' }}
+              viewBox="0 0 376 115"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M 0 30 L 0 115 L 376 115 L 376 30 A 35 35 0 0 0 341 0 L 35 0 A 35 35 0 0 0 0 30 Z"
+                fill="#FFFFFF"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-end justify-center pb-4 z-10">
+              <nav className="flex items-center justify-center gap-16 w-full px-10">
+                <div className="flex flex-col items-center gap-2.5">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium leading-[11.93px] text-blue-500" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>HOME</span>
+                </div>
+                <div className="flex flex-col items-center gap-2.5">
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] font-medium leading-[11.93px] text-blue-400" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>PROFILE</span>
+                </div>
+              </nav>
+            </div>
+          </div>
+        </footer>
       </div>
     }>
       <ProductsContent />
