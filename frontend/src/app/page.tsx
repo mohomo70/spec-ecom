@@ -95,7 +95,7 @@ export default function HomePage() {
               </div>
             </Link>
             
-            <Link href="/aquascaping" className="group">
+            <Link href="/articles/category/aquascaping" className="group">
               <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
                 <Palette className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
                 <h3 className="text-xs md:text-lg font-medium text-gray-800">Aquascaping</h3>
@@ -110,7 +110,7 @@ export default function HomePage() {
             </Link>
             
             {/* 4th card - Fish Care - Desktop only */}
-            <Link href="/fish-care" className="group hidden md:block">
+            <Link href="/articles/category/fish-care" className="group hidden md:block">
               <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
                 <Stethoscope className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
                 <h3 className="text-xs md:text-lg font-medium text-gray-800">Fish Care</h3>

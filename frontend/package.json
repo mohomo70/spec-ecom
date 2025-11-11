@@ -23,7 +23,11 @@
     "react-hook-form": "^7.65.0",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.1.12",
-    "zustand": "^5.0.8"
+    "zustand": "^5.0.8",
+    "@tiptap/react": "^2.9.2",
+    "@tiptap/starter-kit": "^2.9.2",
+    "@tiptap/extension-link": "^2.9.2",
+    "@tiptap/extension-image": "^2.9.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
