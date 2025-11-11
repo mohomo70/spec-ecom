@@ -9,6 +9,8 @@ import { useAuthStore } from "@/lib/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authService } from "@/lib/auth";
+import Link from "next/link";
+import { Home } from "lucide-react";
 
 interface ProfileForm {
   first_name: string;
@@ -79,12 +81,22 @@ export default function ProfilePage() {
   if (profileError) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-red-600">Failed to load profile. Please try logging in again.</p>
-            <Button onClick={handleLogout} className="mt-4">Return to Login</Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-4">
+            <Link href="/">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Go Home
+              </Button>
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-red-600">Failed to load profile. Please try logging in again.</p>
+              <Button onClick={handleLogout} className="mt-4">Return to Login</Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -92,18 +104,28 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-4">
+            <Link href="/">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Go Home
+              </Button>
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -111,6 +133,14 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
+        <div className="mb-4">
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Go Home
+            </Button>
+          </Link>
+        </div>
         <h1 className="text-3xl font-bold mb-8">My Profile</h1>
 
         <Card>

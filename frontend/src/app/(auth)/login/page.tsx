@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/api";
 import { useAuthStore } from "@/lib/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Home } from "lucide-react";
 
 interface LoginForm {
   email: string;
@@ -48,13 +49,22 @@ export default function LoginPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[80vh]">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>
-            Sign in to your account to continue shopping
-          </CardDescription>
-        </CardHeader>
+      <div className="w-full max-w-md">
+        <div className="mb-4">
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Go Home
+            </Button>
+          </Link>
+        </div>
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Login</CardTitle>
+            <CardDescription>
+              Sign in to your account to continue shopping
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {error && (
@@ -134,7 +144,8 @@ export default function LoginPage() {
             </p>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
