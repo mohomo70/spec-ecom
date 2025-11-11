@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/stores/auth";
@@ -9,9 +10,18 @@ import { Search, BookOpen, Palette, Fish, Heart, Shield, Truck } from "lucide-re
 
 export default function HomePage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const userName = user?.first_name || user?.email?.split("@")[0] || "Guest";
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push("/products");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -63,6 +73,11 @@ export default function HomePage() {
               placeholder="Search For Fish"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
               className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border-0 shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 text-gray-900 placeholder-gray-400 text-sm md:text-base"
             />
           </div>
@@ -87,7 +102,7 @@ export default function HomePage() {
               </div>
             </Link>
             
-            <Link href="/species" className="group">
+            <Link href="/products" className="group">
               <div className="w-[120px] h-[95px] md:w-[150px] md:h-[120px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
                 <Fish className="w-7 h-7 md:w-9 md:h-9 text-blue-500" />
                 <h3 className="text-xs md:text-sm font-medium text-gray-800">Species</h3>

@@ -137,7 +137,7 @@ function ProductsContent() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="relative bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 overflow-hidden">
+      <header className="relative bg-gradient-to-br from-sky-400 via-blue-500 to-cyan-400 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
           <div className="absolute top-20 right-20 w-24 h-24 bg-white rounded-full"></div>
@@ -411,7 +411,7 @@ export default function ProductsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background">
-        <header className="relative bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 overflow-hidden">
+        <header className="relative bg-gradient-to-br from-sky-400 via-blue-500 to-cyan-400 overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
             <div className="absolute top-20 right-20 w-24 h-24 bg-white rounded-full"></div>

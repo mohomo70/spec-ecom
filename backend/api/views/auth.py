@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import get_user_model
 from ..serializers import UserSerializer, UserRegistrationSerializer
 
@@ -89,3 +90,29 @@ class UserProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLogoutView(APIView):
+    """User logout endpoint that blacklists the refresh token."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh_token')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+                return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+            else:
+                # If no refresh token provided, just return success
+                # The client should clear the token from storage
+                return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+        except TokenError:
+            # Token is already invalid or blacklisted
+            return Response({'message': 'Token already invalid'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': 'Logout failed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
