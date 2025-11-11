@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/stores/auth";
-import { Search, BookOpen, Palette, Fish, Heart, Shield, Truck } from "lucide-react";
+import { Search, BookOpen, Palette, Fish, Heart, Shield, Truck, Stethoscope } from "lucide-react";
 
 
 export default function HomePage() {
@@ -87,25 +87,33 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-8 md:py-12 bg-gradient-to-b from-blue-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center md:justify-between gap-4 md:gap-6 max-w-4xl mx-auto">
+          <div className="flex flex-wrap justify-center md:justify-between gap-4 md:gap-8 max-w-5xl mx-auto">
             <Link href="/articles" className="group">
-              <div className="w-[120px] h-[95px] md:w-[150px] md:h-[120px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
-                <BookOpen className="w-7 h-7 md:w-9 md:h-9 text-blue-500" />
-                <h3 className="text-xs md:text-sm font-medium text-gray-800">Articles</h3>
+              <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
+                <BookOpen className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
+                <h3 className="text-xs md:text-lg font-medium text-gray-800">Articles</h3>
               </div>
             </Link>
             
             <Link href="/aquascaping" className="group">
-              <div className="w-[120px] h-[95px] md:w-[150px] md:h-[120px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
-                <Palette className="w-7 h-7 md:w-9 md:h-9 text-blue-500" />
-                <h3 className="text-xs md:text-sm font-medium text-gray-800">Aquascaping</h3>
+              <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
+                <Palette className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
+                <h3 className="text-xs md:text-lg font-medium text-gray-800">Aquascaping</h3>
               </div>
             </Link>
             
             <Link href="/products" className="group">
-              <div className="w-[120px] h-[95px] md:w-[150px] md:h-[120px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
-                <Fish className="w-7 h-7 md:w-9 md:h-9 text-blue-500" />
-                <h3 className="text-xs md:text-sm font-medium text-gray-800">Species</h3>
+              <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
+                <Fish className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
+                <h3 className="text-xs md:text-lg font-medium text-gray-800">Species</h3>
+              </div>
+            </Link>
+            
+            {/* 4th card - Fish Care - Desktop only */}
+            <Link href="/fish-care" className="group hidden md:block">
+              <div className="w-[120px] h-[95px] md:w-[220px] md:h-[180px] bg-white rounded-lg shadow-[4px_6px_19px_rgba(141,141,141,0.15)] flex flex-col items-center justify-center gap-2 md:gap-4 transition-all duration-300 group-hover:scale-105 group-hover:shadow-[4px_6px_25px_rgba(141,141,141,0.25)]">
+                <Stethoscope className="w-7 h-7 md:w-16 md:h-16 text-blue-500" />
+                <h3 className="text-xs md:text-lg font-medium text-gray-800">Fish Care</h3>
               </div>
             </Link>
           </div>
@@ -185,7 +193,7 @@ export default function HomePage() {
             />
           </svg>
           <div className="absolute inset-0 flex items-end justify-center pb-3 md:pb-4 z-10">
-            <nav className="flex items-center justify-center gap-12 md:gap-16 w-full px-6 md:px-10">
+            <nav className="flex items-center justify-center gap-12 md:gap-20 w-full px-6 md:px-10">
               <Link href="/" className="flex flex-col items-center gap-2 md:gap-2.5">
                 <div className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center">
                   <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,6 +201,12 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <span className="text-[9px] md:text-[10px] font-medium leading-[11.93px] text-blue-500" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>HOME</span>
+              </Link>
+              <Link href="/products" className="hidden md:flex flex-col items-center gap-2 md:gap-2.5">
+                <div className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center">
+                  <Fish className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
+                </div>
+                <span className="text-[9px] md:text-[10px] font-medium leading-[11.93px] text-blue-400" style={{ fontFamily: 'SF Pro Text, system-ui, -apple-system' }}>PRODUCTS</span>
               </Link>
               <Link href="/profile" className="flex flex-col items-center gap-2 md:gap-2.5">
                 <div className="w-5 h-5 md:w-6 md:h-6 flex items-center justify-center">
