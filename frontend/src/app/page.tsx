@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Header */}
-      <header className="relative bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 overflow-hidden">
+      <header className="relative bg-gradient-to-br from-sky-400 via-blue-500 to-cyan-400 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full hidden md:block"></div>
           <div className="absolute top-20 right-20 w-24 h-24 bg-white rounded-full hidden md:block"></div>
