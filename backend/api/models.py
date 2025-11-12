@@ -8,6 +8,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 
 class User(AbstractUser):
@@ -331,3 +332,94 @@ class Article(models.Model):
             self.published_at = None
 
         super().save(*args, **kwargs)
+
+
+class ProductImage(models.Model):
+    """Image files associated with fish products."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(FishProduct, on_delete=models.CASCADE, related_name='product_images')
+    image = models.ImageField(
+        upload_to='products/%Y/%m/%d/',
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    is_primary = models.BooleanField(default=False)
+    display_order = models.IntegerField(default=0)
+    alt_text = models.CharField(max_length=200, blank=True)
+    caption = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'product_images'
+        ordering = ['-is_primary', 'display_order', 'created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'is_primary'],
+                condition=models.Q(is_primary=True),
+                name='unique_primary_image_per_product'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['product', 'is_primary']),
+            models.Index(fields=['product', 'display_order']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.is_primary:
+            ProductImage.objects.filter(product=self.product, is_primary=True).exclude(pk=self.pk).update(is_primary=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.product.species_name} - Image ({'Primary' if self.is_primary else 'Gallery'})"
+
+
+class CategoryImage(models.Model):
+    """Image file associated with a product category."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category_images')
+    image = models.ImageField(
+        upload_to='categories/%Y/%m/%d/',
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    alt_text = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'category_images'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['category']),
+        ]
+
+    def __str__(self):
+        return f"{self.category.name} - Image"
+
+
+class ArticleImage(models.Model):
+    """Featured image file associated with a blog article."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='article_images')
+    image = models.ImageField(
+        upload_to='articles/%Y/%m/%d/',
+        max_length=255,
+        blank=True,
+        null=True
+    )
+    alt_text = models.CharField(max_length=200, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'article_images'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['article']),
+        ]
+
+    def __str__(self):
+        return f"{self.article.title} - Featured Image"

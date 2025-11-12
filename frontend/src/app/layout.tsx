@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Freshwater Fish Ecommerce",
   description: "Premium freshwater fish for your aquarium",
+  icons: {
+    icon: '/beta.png',
+    apple: '/beta.png',
+  },
 };
 
 export default function RootLayout({

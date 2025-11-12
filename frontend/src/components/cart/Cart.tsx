@@ -35,15 +35,21 @@ export function Cart() {
         {items.map((item) => (
           <div key={item.id} className="flex items-center gap-4 p-4 border rounded">
             <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-              {item.product.image_url ? (
-                <img
-                  src={item.product.image_url}
-                  alt={item.product.species_name}
-                  className="w-full h-full object-cover rounded"
-                />
-              ) : (
-                <div className="text-xs text-gray-400">No Image</div>
-              )}
+              {(() => {
+                const imageUrl = (item.product as any).primary_image_url || 
+                                 (item.product as any).images?.find((img: any) => img.is_primary)?.url ||
+                                 (item.product as any).images?.[0]?.url ||
+                                 item.product.image_url;
+                return imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={item.product.species_name}
+                    className="w-full h-full object-cover rounded"
+                  />
+                ) : (
+                  <div className="text-xs text-gray-400">No Image</div>
+                );
+              })()}
             </div>
 
             <div className="flex-1">

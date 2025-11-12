@@ -6,9 +6,22 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils.html import strip_tags
 import bleach
-from .models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article
+from .models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
 
 User = get_user_model()
+
+
+class ImageURLMixin:
+    """Mixin for serializers to generate image URLs using .url property (CDN-ready)."""
+    
+    def get_image_url(self, obj):
+        """Return full image URL using Django's .url property (works with local storage or CDN)."""
+        if hasattr(obj, 'image') and obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -58,19 +71,35 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer, ImageURLMixin):
     """Serializer for Category model."""
+    image_url_from_upload = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'description', 'image_url', 'parent_category', 'display_order', 'is_active']
+        fields = ['id', 'name', 'slug', 'description', 'image_url', 'image_url_from_upload', 'parent_category', 'display_order', 'is_active']
         read_only_fields = ['id']
+    
+    def get_image_url_from_upload(self, obj):
+        """Return category image URL if available from uploaded image."""
+        try:
+            category_image = obj.category_images.first()
+            if category_image and category_image.image:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(category_image.image.url)
+                return category_image.image.url
+        except Exception:
+            pass
+        return None
 
 
-class FishProductSerializer(serializers.ModelSerializer):
+class FishProductSerializer(serializers.ModelSerializer, ImageURLMixin):
     """Serializer for FishProduct model."""
 
     categories = CategorySerializer(many=True, read_only=True)
+    primary_image_url = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
 
     class Meta:
         model = FishProduct
@@ -79,10 +108,47 @@ class FishProductSerializer(serializers.ModelSerializer):
             'is_available', 'difficulty_level', 'min_tank_size_gallons', 'ph_range_min',
             'ph_range_max', 'temperature_range_min', 'temperature_range_max', 'max_size_inches',
             'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions',
-            'image_url', 'additional_images', 'seo_title', 'seo_description', 'categories',
+            'image_url', 'primary_image_url', 'images', 'additional_images', 'seo_title', 'seo_description', 'categories',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_primary_image_url(self, obj):
+        """Return primary image URL if available."""
+        try:
+            primary_image = obj.product_images.filter(is_primary=True).first()
+            if primary_image and primary_image.image:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(primary_image.image.url)
+                return primary_image.image.url
+        except Exception:
+            pass
+        return None
+    
+    def get_images(self, obj):
+        """Return all product images (primary + additional) with URLs."""
+        try:
+            images = obj.product_images.all().order_by('-is_primary', 'display_order', 'created_at')
+            request = self.context.get('request')
+            result = []
+            for img in images:
+                image_data = {
+                    'id': str(img.id),
+                    'is_primary': img.is_primary,
+                    'display_order': img.display_order,
+                    'alt_text': img.alt_text,
+                    'caption': img.caption,
+                }
+                if img.image:
+                    if request:
+                        image_data['url'] = request.build_absolute_uri(img.image.url)
+                    else:
+                        image_data['url'] = img.image.url
+                result.append(image_data)
+            return result
+        except Exception:
+            return []
 
 
 class ShippingAddressSerializer(serializers.ModelSerializer):
@@ -233,16 +299,17 @@ class ArticleCategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'slug', 'created_at']
 
 
-class ArticleSummarySerializer(serializers.ModelSerializer):
+class ArticleSummarySerializer(serializers.ModelSerializer, ImageURLMixin):
     """Serializer for article listing (summary view)."""
     category = ArticleCategorySerializer(read_only=True)
     author = serializers.SerializerMethodField()
     excerpt = serializers.SerializerMethodField()
+    featured_image_url_from_upload = serializers.SerializerMethodField()
 
     class Meta:
         model = Article
         fields = [
-            'id', 'title', 'slug', 'excerpt', 'featured_image_url', 'featured_image_alt_text',
+            'id', 'title', 'slug', 'excerpt', 'featured_image_url', 'featured_image_url_from_upload', 'featured_image_alt_text',
             'category', 'author', 'published_at', 'created_at'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'published_at']
@@ -261,6 +328,19 @@ class ArticleSummarySerializer(serializers.ModelSerializer):
         if len(content) > 200:
             return content[:200].rstrip() + '...'
         return content
+    
+    def get_featured_image_url_from_upload(self, obj):
+        """Return article featured image URL if available from uploaded image."""
+        try:
+            article_image = obj.article_images.first()
+            if article_image and article_image.image:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(article_image.image.url)
+                return article_image.image.url
+        except Exception:
+            pass
+        return None
 
 
 class ArticleDetailSerializer(ArticleSummarySerializer):
@@ -388,3 +468,61 @@ class ArticleCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'non_field_errors': [f'Failed to update article: {str(e)}']
             })
+
+
+class ProductImageSerializer(serializers.ModelSerializer, ImageURLMixin):
+    """Serializer for ProductImage model."""
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProductImage
+        fields = [
+            'id', 'product', 'image', 'image_url', 'is_primary', 'display_order',
+            'alt_text', 'caption', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'image': {'required': True},
+        }
+    
+    def validate(self, attrs):
+        """Ensure only one primary image per product."""
+        is_primary = attrs.get('is_primary', False)
+        product = attrs.get('product') or (self.instance.product if self.instance else None)
+        
+        if is_primary and product:
+            existing_primary = ProductImage.objects.filter(
+                product=product,
+                is_primary=True
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if existing_primary.exists():
+                existing_primary.update(is_primary=False)
+        
+        return attrs
+
+
+class CategoryImageSerializer(serializers.ModelSerializer, ImageURLMixin):
+    """Serializer for CategoryImage model."""
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CategoryImage
+        fields = ['id', 'category', 'image', 'image_url', 'alt_text', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'image': {'required': True},
+        }
+
+
+class ArticleImageSerializer(serializers.ModelSerializer, ImageURLMixin):
+    """Serializer for ArticleImage model."""
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ArticleImage
+        fields = ['id', 'article', 'image', 'image_url', 'alt_text', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'image': {'required': True},
+        }

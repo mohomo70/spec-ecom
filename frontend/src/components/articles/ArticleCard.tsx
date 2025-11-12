@@ -10,7 +10,8 @@ interface ArticleCardProps {
     title: string;
     slug: string;
     excerpt: string;
-    featured_image_url?: string;
+    featured_image_url?: string; // Legacy field
+    featured_image_url_from_upload?: string; // New uploaded image
     featured_image_alt_text?: string;
     category: {
       id: string;
@@ -35,18 +36,21 @@ export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link href={`/articles/${article.slug}`}>
       <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-        {article.featured_image_url && (
-          <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
-            <Image
-              src={article.featured_image_url}
-              alt={article.featured_image_alt_text || article.title}
-              fill
-              className="object-cover"
-              loading="lazy"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-        )}
+        {(() => {
+          const imageUrl = article.featured_image_url_from_upload || article.featured_image_url;
+          return imageUrl ? (
+            <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+              <Image
+                src={imageUrl}
+                alt={article.featured_image_alt_text || article.title}
+                fill
+                className="object-cover"
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
+          ) : null;
+        })()}
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">{article.category.name}</span>

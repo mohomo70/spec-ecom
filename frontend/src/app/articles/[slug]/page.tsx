@@ -13,7 +13,8 @@ interface ArticleDetail {
   slug: string;
   content: string;
   excerpt: string;
-  featured_image_url?: string;
+  featured_image_url?: string; // Legacy field
+  featured_image_url_from_upload?: string; // New uploaded image
   featured_image_alt_text?: string;
   category: {
     id: string;
@@ -81,8 +82,9 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
     setMetaTag("og:description", metaDescription, true);
     setMetaTag("og:type", "article", true);
     setMetaTag("og:url", canonicalUrl, true);
-    if (article.featured_image_url) {
-      setMetaTag("og:image", article.featured_image_url, true);
+    const imageUrl = article.featured_image_url_from_upload || article.featured_image_url;
+    if (imageUrl) {
+      setMetaTag("og:image", imageUrl, true);
       if (article.featured_image_alt_text) {
         setMetaTag("og:image:alt", article.featured_image_alt_text, true);
       }
@@ -90,8 +92,8 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
     setMetaTag("twitter:card", "summary_large_image", true);
     setMetaTag("twitter:title", metaTitle, true);
     setMetaTag("twitter:description", metaDescription, true);
-    if (article.featured_image_url) {
-      setMetaTag("twitter:image", article.featured_image_url, true);
+    if (imageUrl) {
+      setMetaTag("twitter:image", imageUrl, true);
     }
   }, [article, metaTitle, metaDescription, canonicalUrl]);
 
@@ -171,18 +173,21 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
       </header>
 
       <article className="container mx-auto px-4 py-8 max-w-4xl">
-        {article.featured_image_url && (
-          <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden">
-            <Image
-              src={article.featured_image_url}
-              alt={article.featured_image_alt_text || article.title}
-              fill
-              className="object-cover"
-              loading="lazy"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1024px"
-            />
-          </div>
-        )}
+        {(() => {
+          const imageUrl = article.featured_image_url_from_upload || article.featured_image_url;
+          return imageUrl ? (
+            <div className="relative w-full h-96 mb-8 rounded-lg overflow-hidden">
+              <Image
+                src={imageUrl}
+                alt={article.featured_image_alt_text || article.title}
+                fill
+                className="object-cover"
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1024px"
+              />
+            </div>
+          ) : null;
+        })()}
 
         <div
           className="prose prose-lg max-w-none"
@@ -202,7 +207,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
               },
               datePublished: article.published_at,
               dateModified: article.updated_at,
-              image: article.featured_image_url,
+              image: article.featured_image_url_from_upload || article.featured_image_url,
               articleBody: article.content,
               articleSection: article.category.name,
             }),
