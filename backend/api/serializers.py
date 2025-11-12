@@ -4,7 +4,9 @@ Serializers for freshwater fish ecommerce platform.
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem
+from django.utils.html import strip_tags
+import bleach
+from .models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article
 
 User = get_user_model()
 
@@ -220,3 +222,169 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             product.save()
 
         return order
+
+
+class ArticleCategorySerializer(serializers.ModelSerializer):
+    """Serializer for ArticleCategory model."""
+
+    class Meta:
+        model = ArticleCategory
+        fields = ['id', 'name', 'slug', 'description', 'created_at']
+        read_only_fields = ['id', 'slug', 'created_at']
+
+
+class ArticleSummarySerializer(serializers.ModelSerializer):
+    """Serializer for article listing (summary view)."""
+    category = ArticleCategorySerializer(read_only=True)
+    author = serializers.SerializerMethodField()
+    excerpt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'slug', 'excerpt', 'featured_image_url', 'featured_image_alt_text',
+            'category', 'author', 'published_at', 'created_at'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'published_at']
+
+    def get_author(self, obj):
+        return {
+            'id': str(obj.author.id),
+            'first_name': obj.author.first_name,
+            'email': obj.author.email
+        }
+
+    def get_excerpt(self, obj):
+        if obj.excerpt:
+            return obj.excerpt
+        content = strip_tags(obj.content)
+        if len(content) > 200:
+            return content[:200].rstrip() + '...'
+        return content
+
+
+class ArticleDetailSerializer(ArticleSummarySerializer):
+    """Serializer for article detail view."""
+
+    class Meta(ArticleSummarySerializer.Meta):
+        fields = ArticleSummarySerializer.Meta.fields + [
+            'content', 'meta_title', 'meta_description', 'status', 'updated_at'
+        ]
+        read_only_fields = ArticleSummarySerializer.Meta.read_only_fields + ['updated_at']
+
+
+class ArticleCategoryCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating article categories."""
+
+    class Meta:
+        model = ArticleCategory
+        fields = ['name', 'description']
+        extra_kwargs = {
+            'description': {'required': False, 'allow_blank': True}
+        }
+
+    def validate_name(self, value):
+        if ArticleCategory.objects.filter(name__iexact=value).exists():
+            raise serializers.ValidationError("A category with this name already exists.")
+        return value
+
+
+class ArticleCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating and updating articles."""
+    category_id = serializers.UUIDField(write_only=True)
+    category = ArticleCategorySerializer(read_only=True)
+
+    class Meta:
+        model = Article
+        fields = [
+            'title', 'content', 'excerpt', 'featured_image_url', 'featured_image_alt_text',
+            'category_id', 'category', 'status', 'meta_title', 'meta_description'
+        ]
+        extra_kwargs = {
+            'excerpt': {'required': False, 'allow_blank': True},
+            'featured_image_url': {'required': False, 'allow_blank': True},
+            'featured_image_alt_text': {'required': False, 'allow_blank': True},
+            'meta_title': {'required': False, 'allow_blank': True},
+            'meta_description': {'required': False, 'allow_blank': True},
+        }
+
+    def validate_content(self, value):
+        """Sanitize HTML content to prevent XSS attacks."""
+        allowed_tags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 
+                       'strong', 'em', 'a', 'img', 'blockquote', 'br']
+        allowed_attributes = {
+            'a': ['href', 'title'],
+            'img': ['src', 'alt', 'title', 'width', 'height'],
+        }
+        return bleach.clean(value, tags=allowed_tags, attributes=allowed_attributes, strip=True)
+
+    def validate(self, attrs):
+        """Validate featured_image_alt_text is provided when featured_image_url is provided."""
+        featured_image_url = attrs.get('featured_image_url')
+        featured_image_alt_text = attrs.get('featured_image_alt_text')
+        
+        if featured_image_url and not featured_image_alt_text:
+            raise serializers.ValidationError({
+                'featured_image_alt_text': 'Alt text is required when a featured image is provided.'
+            })
+        return attrs
+
+    def create(self, validated_data):
+        """Create article with author assignment and default meta fields."""
+        category_id = validated_data.pop('category_id')
+        try:
+            category = ArticleCategory.objects.get(id=category_id)
+        except ArticleCategory.DoesNotExist:
+            raise serializers.ValidationError({
+                'category_id': f'Category with id {category_id} does not exist.'
+            })
+        
+        # Set author from request user
+        validated_data['author'] = self.context['request'].user
+        validated_data['category'] = category
+        
+        # Generate default meta title if not provided
+        if not validated_data.get('meta_title'):
+            validated_data['meta_title'] = validated_data['title']
+        
+        # Generate default meta description if not provided
+        if not validated_data.get('meta_description'):
+            content = strip_tags(validated_data['content'])
+            validated_data['meta_description'] = content[:160].rstrip() + '...' if len(content) > 160 else content
+        
+        try:
+            return Article.objects.create(**validated_data)
+        except Exception as e:
+            raise serializers.ValidationError({
+                'non_field_errors': [f'Failed to create article: {str(e)}']
+            })
+
+    def update(self, instance, validated_data):
+        """Update article with default meta generation if needed."""
+        category_id = validated_data.pop('category_id', None)
+        if category_id:
+            try:
+                instance.category = ArticleCategory.objects.get(id=category_id)
+            except ArticleCategory.DoesNotExist:
+                raise serializers.ValidationError({
+                    'category_id': f'Category with id {category_id} does not exist.'
+                })
+        
+        # Generate default meta title if not provided and title changed
+        if not validated_data.get('meta_title') and 'title' in validated_data:
+            validated_data['meta_title'] = validated_data['title']
+        
+        # Generate default meta description if not provided and content changed
+        if not validated_data.get('meta_description') and 'content' in validated_data:
+            content = strip_tags(validated_data['content'])
+            validated_data['meta_description'] = content[:160].rstrip() + '...' if len(content) > 160 else content
+        
+        try:
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
+            return instance
+        except Exception as e:
+            raise serializers.ValidationError({
+                'non_field_errors': [f'Failed to update article: {str(e)}']
+            })

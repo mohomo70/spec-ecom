@@ -1,6 +1,6 @@
 """
 Sample data for freshwater fish ecommerce platform.
-Run with: python manage.py shell -c "from sample_data import load_sample_data; load_sample_data()"
+Run with: python manage.py shell -c "from api.management.commands.sample_data import load_sample_data; load_sample_data()"
 """
 
 from api.models import Category, FishProduct, User
@@ -358,3 +358,4 @@ def load_sample_data():
 
 if __name__ == '__main__':
     load_sample_data()
+

@@ -147,6 +147,81 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Articles
+  async getArticles(params?: { category?: string; page?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.category) queryParams.append('category', params.category);
+    if (params?.page) queryParams.append('cursor', params.page);
+    const queryString = queryParams.toString() ? `?${queryParams}` : '';
+    return this.request(`/articles/${queryString}`);
+  }
+
+  async getArticle(slug: string) {
+    return this.request(`/articles/${slug}/`);
+  }
+
+  async getArticleCategories() {
+    return this.request('/article-categories/');
+  }
+
+  async getArticleCategory(slug: string) {
+    return this.request(`/article-categories/${slug}/`);
+  }
+
+  async createArticle(data: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    featured_image_url?: string;
+    featured_image_alt_text?: string;
+    category_id: string;
+    status: 'draft' | 'published';
+    meta_title?: string;
+    meta_description?: string;
+  }) {
+    return this.request('/articles/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createArticleCategory(data: { name: string; description?: string }) {
+    return this.request('/article-categories/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getAdminArticles(params?: { page?: string }) {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('cursor', params.page);
+    const queryString = queryParams.toString() ? `?${queryParams}` : '';
+    return this.request(`/articles/admin${queryString}`);
+  }
+
+  async updateArticle(slug: string, data: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    featured_image_url?: string;
+    featured_image_alt_text?: string;
+    category_id: string;
+    status: 'draft' | 'published';
+    meta_title?: string;
+    meta_description?: string;
+  }) {
+    return this.request(`/articles/${slug}/`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteArticle(slug: string) {
+    return this.request(`/articles/${slug}/`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
@@ -204,3 +279,53 @@ const api = {
 };
 
 export { api };
+
+export const articleApi = {
+  getArticles: async (params?: { category?: string; page?: string }) => {
+    return apiClient.getArticles(params);
+  },
+  getArticle: async (slug: string) => {
+    return apiClient.getArticle(slug);
+  },
+  getCategories: async () => {
+    return apiClient.getArticleCategories();
+  },
+  getCategory: async (slug: string) => {
+    return apiClient.getArticleCategory(slug);
+  },
+  createArticle: async (data: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    featured_image_url?: string;
+    featured_image_alt_text?: string;
+    category_id: string;
+    status: 'draft' | 'published';
+    meta_title?: string;
+    meta_description?: string;
+  }) => {
+    return apiClient.createArticle(data);
+  },
+  createCategory: async (data: { name: string; description?: string }) => {
+    return apiClient.createArticleCategory(data);
+  },
+  getAdminArticles: async (params?: { page?: string }) => {
+    return apiClient.getAdminArticles(params);
+  },
+  updateArticle: async (slug: string, data: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    featured_image_url?: string;
+    featured_image_alt_text?: string;
+    category_id: string;
+    status: 'draft' | 'published';
+    meta_title?: string;
+    meta_description?: string;
+  }) => {
+    return apiClient.updateArticle(slug, data);
+  },
+  deleteArticle: async (slug: string) => {
+    return apiClient.deleteArticle(slug);
+  },
+};

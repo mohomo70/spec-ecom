@@ -6,6 +6,8 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.text import slugify
+from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -247,3 +249,85 @@ class OrderItem(models.Model):
     class Meta:
         db_table = 'order_items'
         unique_together = ['order', 'product']
+
+
+class ArticleCategory(models.Model):
+    """Article categories for organizing blog articles."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'article_categories'
+        ordering = ['name']
+        verbose_name_plural = 'Article Categories'
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            original_slug = self.slug
+            counter = 1
+            while ArticleCategory.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
+
+class Article(models.Model):
+    """Blog articles with rich text content and SEO metadata."""
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
+    content = models.TextField()
+    excerpt = models.TextField(blank=True)
+    featured_image_url = models.URLField(blank=True)
+    featured_image_alt_text = models.CharField(max_length=200, blank=True)
+    category = models.ForeignKey(ArticleCategory, on_delete=models.RESTRICT, related_name='articles')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    meta_title = models.CharField(max_length=60, blank=True)
+    meta_description = models.CharField(max_length=160, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'articles'
+        ordering = ['-published_at', '-created_at']
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['status']),
+            models.Index(fields=['category']),
+            models.Index(fields=['published_at']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['status', 'published_at']),
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+            original_slug = self.slug
+            counter = 1
+            while Article.objects.filter(slug=self.slug).exclude(pk=self.pk).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        if self.status == 'published' and not self.published_at:
+            self.published_at = timezone.now()
+        elif self.status == 'draft' and self.published_at:
+            self.published_at = None
+
+        super().save(*args, **kwargs)
