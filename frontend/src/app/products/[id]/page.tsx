@@ -11,6 +11,15 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface ProductImage {
+  id: string;
+  url: string;
+  is_primary: boolean;
+  display_order: number;
+  alt_text?: string;
+  caption?: string;
+}
+
 interface Product {
   id: string;
   species_name: string;
@@ -30,8 +39,10 @@ interface Product {
   diet_type?: string;
   compatibility_notes: string;
   care_instructions: string;
-  image_url?: string;
-  additional_images: string[];
+  image_url?: string; // Legacy field
+  primary_image_url?: string; // New uploaded primary image
+  images?: ProductImage[]; // New uploaded images array
+  additional_images: string[]; // Legacy field
   categories: Array<{
     id: string;
     name: string;
@@ -262,29 +273,52 @@ export default function ProductDetailPage() {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-            {typedProduct.image_url ? (
-              <img
-                src={typedProduct.image_url}
-                alt={typedProduct.species_name}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <div className="text-gray-400 text-lg">No Image Available</div>
-            )}
+            {(() => {
+              // Priority: primary_image_url > first image from images array > legacy image_url
+              const primaryImage = typedProduct.primary_image_url || 
+                                   typedProduct.images?.find(img => img.is_primary)?.url ||
+                                   typedProduct.images?.[0]?.url ||
+                                   typedProduct.image_url;
+              
+              return primaryImage ? (
+                <img
+                  src={primaryImage}
+                  alt={typedProduct.images?.find(img => img.is_primary)?.alt_text || 
+                       typedProduct.images?.[0]?.alt_text || 
+                       typedProduct.species_name}
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              ) : (
+                <div className="text-gray-400 text-lg">No Image Available</div>
+              );
+            })()}
           </div>
-          {typedProduct.additional_images?.length > 0 && (
-            <div className="grid grid-cols-4 gap-2">
-              {typedProduct.additional_images.map((image, index) => (
-                <div key={index} className="aspect-square bg-gray-100 rounded">
-                  <img
-                    src={image}
-                    alt={`${typedProduct.species_name} ${index + 1}`}
-                    className="w-full h-full object-cover rounded"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Gallery Images - Use new images array or fallback to additional_images */}
+          {(() => {
+            const galleryImages = typedProduct.images?.filter(img => !img.is_primary) || 
+                                 typedProduct.additional_images || [];
+            
+            return galleryImages.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {galleryImages.map((image, index) => {
+                  const imageUrl = typeof image === 'string' ? image : image.url;
+                  const imageAlt = typeof image === 'string' 
+                    ? `${typedProduct.species_name} ${index + 1}` 
+                    : (image.alt_text || `${typedProduct.species_name} ${index + 1}`);
+                  
+                  return (
+                    <div key={typeof image === 'string' ? index : image.id} className="aspect-square bg-gray-100 rounded">
+                      <img
+                        src={imageUrl}
+                        alt={imageAlt}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Product Details */}

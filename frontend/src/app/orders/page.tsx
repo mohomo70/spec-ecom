@@ -18,7 +18,13 @@ interface Order {
     product: {
       species_name: string;
       scientific_name?: string;
-      image_url?: string;
+      image_url?: string; // Legacy field
+      primary_image_url?: string; // New uploaded primary image
+      images?: Array<{
+        id: string;
+        url: string;
+        is_primary: boolean;
+      }>;
     };
     quantity: number;
     unit_price: string;
@@ -136,15 +142,21 @@ export default function OrdersPage() {
                       <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                            {item.product.image_url ? (
-                              <img
-                                src={item.product.image_url}
-                                alt={item.product.species_name}
-                                className="w-full h-full object-cover rounded"
-                              />
-                            ) : (
-                              <div className="text-xs text-gray-400">No Image</div>
-                            )}
+                            {(() => {
+                              const imageUrl = item.product.primary_image_url || 
+                                               item.product.images?.find(img => img.is_primary)?.url ||
+                                               item.product.images?.[0]?.url ||
+                                               item.product.image_url;
+                              return imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={item.product.species_name}
+                                  className="w-full h-full object-cover rounded"
+                                />
+                              ) : (
+                                <div className="text-xs text-gray-400">No Image</div>
+                              );
+                            })()}
                           </div>
                           <div>
                             <p className="font-medium">{item.product.species_name}</p>

@@ -110,6 +110,29 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# File Storage Configuration (CDN-ready)
+# Default to local filesystem storage, can be switched to CDN via environment variable
+USE_CDN = config('USE_CDN', default=False, cast=bool)
+
+if USE_CDN:
+    # CDN Configuration (AWS S3 example - uncomment and configure when ready)
+    # INSTALLED_APPS.append('storages')
+    # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+    # AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
+    # AWS_S3_CUSTOM_DOMAIN = config('AWS_S3_CUSTOM_DOMAIN')
+    # AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+    # AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+    # AWS_S3_OBJECT_PARAMETERS = {
+    #     'CacheControl': 'max-age=86400',
+    # }
+    # AWS_DEFAULT_ACL = 'public-read'
+    # MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    pass
+else:
+    # Local filesystem storage (default)
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

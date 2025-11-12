@@ -21,7 +21,15 @@ interface Product {
   stock_quantity: number;
   is_available: boolean;
   difficulty_level: string;
-  image_url?: string;
+  image_url?: string; // Legacy field
+  primary_image_url?: string; // New uploaded primary image
+  images?: Array<{
+    id: string;
+    url: string;
+    is_primary: boolean;
+    display_order: number;
+    alt_text?: string;
+  }>;
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
@@ -288,15 +296,25 @@ function ProductsContent() {
           <Card key={product.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="aspect-video bg-gray-100 rounded-md mb-4 flex items-center justify-center">
-                {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.species_name}
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                ) : (
-                  <div className="text-gray-400">No Image</div>
-                )}
+                {(() => {
+                  // Priority: primary_image_url > first image from images array > legacy image_url
+                  const primaryImage = product.primary_image_url || 
+                                       product.images?.find(img => img.is_primary)?.url ||
+                                       product.images?.[0]?.url ||
+                                       product.image_url;
+                  
+                  return primaryImage ? (
+                    <img
+                      src={primaryImage}
+                      alt={product.images?.find(img => img.is_primary)?.alt_text || 
+                           product.images?.[0]?.alt_text || 
+                           product.species_name}
+                      className="w-full h-full object-cover rounded-md"
+                    />
+                  ) : (
+                    <div className="text-gray-400">No Image</div>
+                  );
+                })()}
               </div>
               <CardTitle className="text-lg">
                 {search ? (

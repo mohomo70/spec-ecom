@@ -5,20 +5,26 @@ Article views.
 import logging
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import CursorPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
-from ..models import Article, ArticleCategory
+from django.db import transaction, DatabaseError, OperationalError
+import os
+from ..models import Article, ArticleCategory, ArticleImage
 from ..serializers import (
     ArticleSummarySerializer,
     ArticleDetailSerializer,
     ArticleCategorySerializer,
     ArticleCreateSerializer,
-    ArticleCategoryCreateSerializer
+    ArticleCategoryCreateSerializer,
+    ArticleImageSerializer
 )
+from ..validators import validate_image_file
+from ..permissions import IsAdminOnly
 
 logger = logging.getLogger(__name__)
 
@@ -175,4 +181,221 @@ class ArticleCategoryViewSet(viewsets.ModelViewSet):
         if response.status_code == status.HTTP_204_NO_CONTENT:
             cache.delete('article_categories_list')
         return response
+
+
+class ArticleImageUploadView(APIView):
+    """Upload, update, and delete featured images for articles."""
+    
+    permission_classes = [IsAdminOnly]
+    
+    def post(self, request, article_id):
+        """Upload a new article featured image."""
+        try:
+            article = get_object_or_404(Article, id=article_id)
+            
+            if 'image' not in request.FILES:
+                return Response(
+                    {
+                        'error': 'image_required',
+                        'message': 'Image file is required',
+                        'field': 'image'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            image_file = request.FILES['image']
+            
+            try:
+                validate_image_file(image_file)
+            except Exception as e:
+                error_message = str(e)
+                if 'format' in error_message.lower():
+                    return Response(
+                        {
+                            'error': 'invalid_format',
+                            'message': 'Unsupported file format. Only JPEG, PNG, and WebP formats are supported.',
+                            'field': 'image'
+                        },
+                        status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                    )
+                elif 'size' in error_message.lower():
+                    return Response(
+                        {
+                            'error': 'file_too_large',
+                            'message': error_message,
+                            'field': 'image'
+                        },
+                        status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                    )
+                elif 'dimensions' in error_message.lower():
+                    return Response(
+                        {
+                            'error': 'dimensions_exceeded',
+                            'message': error_message,
+                            'field': 'image'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                else:
+                    return Response(
+                        {
+                            'error': 'invalid_image',
+                            'message': 'Invalid or corrupted image file',
+                            'field': 'image'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            alt_text = request.data.get('alt_text', '')
+            
+            try:
+                with transaction.atomic():
+                    article_image = ArticleImage.objects.create(
+                        article=article,
+                        image=image_file,
+                        alt_text=alt_text
+                    )
+                    
+                    serializer = ArticleImageSerializer(article_image, context={'request': request})
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except (OSError, IOError) as e:
+                # Handle disk space errors and storage issues
+                return Response(
+                    {
+                        'error': 'storage_error',
+                        'message': 'Storage unavailable. Unable to save image file. Insufficient storage space or storage error.',
+                        'field': 'image'
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            except (DatabaseError, OperationalError) as e:
+                # Handle database connection errors during maintenance
+                return Response(
+                    {
+                        'error': 'database_error',
+                        'message': 'Database temporarily unavailable. Please try again later.',
+                        'field': 'image'
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            except Exception as e:
+                return Response(
+                    {
+                        'error': 'upload_failed',
+                        'message': f'Failed to upload image: {str(e)}',
+                        'field': 'image'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(
+                {
+                    'error': 'server_error',
+                    'message': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def put(self, request, article_id, image_id):
+        """Update/replace an existing article featured image."""
+        try:
+            article = get_object_or_404(Article, id=article_id)
+            article_image = get_object_or_404(ArticleImage, id=image_id, article=article)
+            
+            old_image_path = article_image.image.path if article_image.image else None
+            
+            if 'image' in request.FILES:
+                image_file = request.FILES['image']
+                
+                try:
+                    validate_image_file(image_file)
+                except Exception as e:
+                    error_message = str(e)
+                    if 'format' in error_message.lower():
+                        return Response(
+                            {
+                                'error': 'invalid_format',
+                                'message': 'Unsupported file format. Only JPEG, PNG, and WebP formats are supported.',
+                                'field': 'image'
+                            },
+                            status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+                        )
+                    elif 'size' in error_message.lower():
+                        return Response(
+                            {
+                                'error': 'file_too_large',
+                                'message': error_message,
+                                'field': 'image'
+                            },
+                            status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                        )
+                    else:
+                        return Response(
+                            {
+                                'error': 'invalid_image',
+                                'message': 'Invalid or corrupted image file',
+                                'field': 'image'
+                            },
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                
+                article_image.image = image_file
+            
+            alt_text = request.data.get('alt_text', article_image.alt_text)
+            
+            try:
+                with transaction.atomic():
+                    article_image.alt_text = alt_text
+                    article_image.save()
+                    
+                    if old_image_path and os.path.isfile(old_image_path):
+                        try:
+                            os.remove(old_image_path)
+                        except OSError:
+                            pass
+                    
+                    serializer = ArticleImageSerializer(article_image, context={'request': request})
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response(
+                    {
+                        'error': 'update_failed',
+                        'message': f'Failed to update image: {str(e)}',
+                        'field': 'image'
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response(
+                {
+                    'error': 'server_error',
+                    'message': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def delete(self, request, article_id, image_id):
+        """Delete an article featured image."""
+        try:
+            article = get_object_or_404(Article, id=article_id)
+            article_image = get_object_or_404(ArticleImage, id=image_id, article=article)
+            
+            image_path = article_image.image.path if article_image.image else None
+            article_image.delete()
+            
+            if image_path and os.path.isfile(image_path):
+                try:
+                    os.remove(image_path)
+                except OSError:
+                    pass
+            
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            return Response(
+                {
+                    'error': 'server_error',
+                    'message': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 

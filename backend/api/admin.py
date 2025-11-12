@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem
+from .models import (
+    User, UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem,
+    ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
+)
 
 
 @admin.register(User)
@@ -20,6 +23,28 @@ class UserProfileAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'user__email']
 
 
+# Inline admin classes (must be defined before use)
+class ProductImageInline(admin.TabularInline):
+    """Inline admin for ProductImage."""
+    model = ProductImage
+    extra = 1
+    fields = ['image', 'is_primary', 'display_order', 'alt_text', 'caption']
+
+
+class CategoryImageInline(admin.TabularInline):
+    """Inline admin for CategoryImage."""
+    model = CategoryImage
+    extra = 1
+    fields = ['image', 'alt_text']
+
+
+class ArticleImageInline(admin.TabularInline):
+    """Inline admin for ArticleImage."""
+    model = ArticleImage
+    extra = 1
+    fields = ['image', 'alt_text']
+
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     """Admin for Category model."""
@@ -28,6 +53,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name', 'slug', 'description']
     prepopulated_fields = {'slug': ('name',)}
     ordering = ['display_order', 'name']
+    inlines = [CategoryImageInline]
 
 
 @admin.register(FishProduct)
@@ -38,6 +64,7 @@ class FishProductAdmin(admin.ModelAdmin):
     search_fields = ['species_name', 'scientific_name', 'description']
     filter_horizontal = ['categories']
     ordering = ['species_name']
+    inlines = [ProductImageInline]
 
     fieldsets = (
         ('Basic Information', {
@@ -110,3 +137,75 @@ class OrderItemAdmin(admin.ModelAdmin):
     search_fields = ['order__order_number', 'product__species_name']
     readonly_fields = ['order', 'product', 'quantity', 'unit_price', 'total_price', 'product_snapshot']
     ordering = ['order', 'product']
+
+
+@admin.register(ArticleCategory)
+class ArticleCategoryAdmin(admin.ModelAdmin):
+    """Admin for ArticleCategory model."""
+    list_display = ['name', 'slug', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['name', 'slug', 'description']
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ['name']
+
+
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    """Admin for Article model."""
+    list_display = ['title', 'slug', 'category', 'author', 'status', 'published_at', 'created_at']
+    list_filter = ['status', 'category', 'published_at', 'created_at']
+    search_fields = ['title', 'slug', 'content', 'excerpt']
+    prepopulated_fields = {'slug': ('title',)}
+    readonly_fields = ['created_at', 'updated_at', 'published_at']
+    ordering = ['-published_at', '-created_at']
+    inlines = [ArticleImageInline]
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'slug', 'category', 'author', 'status')
+        }),
+        ('Content', {
+            'fields': ('excerpt', 'content')
+        }),
+        ('Media & SEO', {
+            'fields': ('featured_image_url', 'featured_image_alt_text', 'meta_title', 'meta_description'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at', 'published_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Auto-set author if not set."""
+        if not obj.author_id:
+            obj.author = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    """Admin for ProductImage model."""
+    list_display = ['product', 'is_primary', 'display_order', 'alt_text', 'created_at']
+    list_filter = ['is_primary', 'created_at']
+    search_fields = ['product__species_name', 'alt_text', 'caption']
+    ordering = ['product', '-is_primary', 'display_order']
+
+
+@admin.register(CategoryImage)
+class CategoryImageAdmin(admin.ModelAdmin):
+    """Admin for CategoryImage model."""
+    list_display = ['category', 'alt_text', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['category__name', 'alt_text']
+    ordering = ['category', 'created_at']
+
+
+@admin.register(ArticleImage)
+class ArticleImageAdmin(admin.ModelAdmin):
+    """Admin for ArticleImage model."""
+    list_display = ['article', 'alt_text', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['article__title', 'alt_text']
+    ordering = ['article', 'created_at']

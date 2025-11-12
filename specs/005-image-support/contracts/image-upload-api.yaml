@@ -1,0 +1,432 @@
+openapi: 3.0.0
+info:
+  title: Image Upload API
+  version: 1.0.0
+  description: API endpoints for uploading and managing images for products, categories, and articles
+
+paths:
+  /api/v1/products/{product_id}/images/:
+    post:
+      summary: Upload product image(s)
+      description: Upload one or more images for a product. First image can be marked as primary.
+      operationId: uploadProductImages
+      tags:
+        - Products
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Product UUID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                primary_image:
+                  type: string
+                  format: binary
+                  description: Primary product image (optional if additional_images provided)
+                additional_images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Additional product images (max 10 total including primary)
+                is_primary:
+                  type: boolean
+                  description: Mark first image as primary (default: true if only one image)
+      responses:
+        '201':
+          description: Images uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Images uploaded successfully"
+                  images:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/FileTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    get:
+      summary: List product images
+      description: Get all images for a product
+      operationId: listProductImages
+      tags:
+        - Products
+        - Images
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of product images
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  primary_image:
+                    $ref: '#/components/schemas/ProductImageResponse'
+                  additional_images:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductImageResponse'
+
+  /api/v1/products/{product_id}/images/{image_id}/:
+    put:
+      summary: Update product image
+      description: Replace an existing product image
+      operationId: updateProductImage
+      tags:
+        - Products
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                is_primary:
+                  type: boolean
+                alt_text:
+                  type: string
+                  maxLength: 200
+                display_order:
+                  type: integer
+      responses:
+        '200':
+          description: Image updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete product image
+      description: Delete a product image
+      operationId: deleteProductImage
+      tags:
+        - Products
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: image_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Image deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/categories/{category_id}/image/:
+    post:
+      summary: Upload category image
+      description: Upload an image for a category
+      operationId: uploadCategoryImage
+      tags:
+        - Categories
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                alt_text:
+                  type: string
+                  maxLength: 200
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    delete:
+      summary: Delete category image
+      description: Delete category image
+      operationId: deleteCategoryImage
+      tags:
+        - Categories
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Image deleted successfully
+
+  /api/v1/articles/{article_id}/image/:
+    post:
+      summary: Upload article featured image
+      description: Upload a featured image for an article
+      operationId: uploadArticleImage
+      tags:
+        - Articles
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                alt_text:
+                  type: string
+                  maxLength: 200
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleImageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    delete:
+      summary: Delete article image
+      description: Delete article featured image
+      operationId: deleteArticleImage
+      tags:
+        - Articles
+        - Images
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Image deleted successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ProductImageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        image_url:
+          type: string
+          format: uri
+          description: Full URL to image (works with local storage or CDN)
+        is_primary:
+          type: boolean
+        display_order:
+          type: integer
+        alt_text:
+          type: string
+        caption:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CategoryImageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        image_url:
+          type: string
+          format: uri
+        alt_text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ArticleImageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        image_url:
+          type: string
+          format: uri
+        alt_text:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        field:
+          type: string
+          nullable: true
+          description: Field name if validation error
+
+  responses:
+    BadRequest:
+      description: Bad request - validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "validation_error"
+            message: "Image file is required"
+            field: "image"
+
+    FileTooLarge:
+      description: File size exceeds limit
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "file_too_large"
+            message: "File size exceeds 5MB limit"
+
+    UnsupportedMediaType:
+      description: Unsupported file format
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "unsupported_format"
+            message: "Only JPEG, PNG, and WebP formats are supported"
+            field: "image"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Admin role required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "permission_denied"
+            message: "Only administrators can upload images"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+

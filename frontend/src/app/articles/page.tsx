@@ -13,7 +13,8 @@ interface Article {
   title: string;
   slug: string;
   excerpt: string;
-  featured_image_url?: string;
+  featured_image_url?: string; // Legacy field
+  featured_image_url_from_upload?: string; // New uploaded image
   featured_image_alt_text?: string;
   category: {
     id: string;
