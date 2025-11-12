@@ -38,12 +38,27 @@ function ArticlesContent() {
     searchParams.get("category") || ""
   );
 
-  const { data: categoriesData } = useQuery<Category[]>({
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useQuery<Category[]>({
     queryKey: ["article-categories"],
     queryFn: async () => {
-      const response = await articleApi.getCategories();
-      return Array.isArray(response) ? response : [];
+      try {
+        const response = await articleApi.getCategories();
+        console.log('categoriesData', response);
+        if (Array.isArray(response)) {
+          return response;
+        }
+        if (response && typeof response === 'object' && 'results' in response) {
+          return Array.isArray(response.results) ? response.results : [];
+        }
+        return [];
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+      }
     },
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: articlesData, isLoading, error } = useQuery<{
@@ -97,6 +112,14 @@ function ArticlesContent() {
     );
   }
 
+  if (categoriesError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-destructive">Error loading categories: {String(categoriesError)}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -108,11 +131,17 @@ function ArticlesContent() {
             className="px-4 py-2 border border-border rounded-md bg-background min-w-[200px]"
           >
             <option value="">All Categories</option>
-            {categoriesData?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {categoriesLoading ? (
+              <option disabled>Loading categories...</option>
+            ) : categoriesData && Array.isArray(categoriesData) && categoriesData.length > 0 ? (
+              categoriesData.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>No categories available</option>
+            )}
           </select>
         </div>
       </div>

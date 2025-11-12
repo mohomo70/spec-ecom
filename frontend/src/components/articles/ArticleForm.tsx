@@ -53,7 +53,13 @@ export function ArticleForm({ initialData, onSubmit, onCancel }: ArticleFormProp
     queryKey: ["article-categories"],
     queryFn: async () => {
       const response = await articleApi.getCategories();
-      return Array.isArray(response) ? response : [];
+      if (Array.isArray(response)) {
+        return response;
+      }
+      if (response && typeof response === 'object' && 'results' in response) {
+        return Array.isArray(response.results) ? response.results : [];
+      }
+      return [];
     },
   });
 

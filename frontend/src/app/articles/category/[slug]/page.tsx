@@ -39,23 +39,20 @@ export default function CategoryArticlesPage({ params }: { params: Promise<{ slu
   const { data: category, isLoading: categoryLoading } = useQuery<Category>({
     queryKey: ["article-category", slug],
     queryFn: () => articleApi.getCategory(slug),
+    enabled: !!slug,
   });
 
-  const { data: articlesData, isLoading: articlesLoading } = useQuery<{
+  const { data: articlesData, isLoading: articlesLoading, error: articlesError } = useQuery<{
     results?: Article[];
     next?: string;
     previous?: string;
   }>({
-    queryKey: ["articles", "category", slug],
+    queryKey: ["articles", "category", category?.id],
     queryFn: async () => {
-      const categories = await articleApi.getCategories();
-      const category = Array.isArray(categories)
-        ? categories.find((c: Category) => c.slug === slug)
-        : null;
       if (!category) return { results: [] };
       return await articleApi.getArticles({ category: category.id });
     },
-    enabled: !!slug,
+    enabled: !!category && !!slug,
   });
 
   const articles = articlesData?.results || (Array.isArray(articlesData) ? articlesData : []);
@@ -72,6 +69,14 @@ export default function CategoryArticlesPage({ params }: { params: Promise<{ slu
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center text-destructive">Category not found</div>
+      </div>
+    );
+  }
+
+  if (articlesError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-destructive">Error loading articles: {String(articlesError)}</div>
       </div>
     );
   }

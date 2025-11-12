@@ -147,14 +147,6 @@ class Command(BaseCommand):
             },
         ]
         
-        featured_images = [
-            'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
-            'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1200',
-            'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200',
-            'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=1200',
-            'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200',
-        ]
-        
         created_count = 0
         for i in range(num_articles):
             category = random.choice(categories)
@@ -171,12 +163,8 @@ class Command(BaseCommand):
                 days_ago = random.randint(0, 180)
                 published_at = timezone.now() - timedelta(days=days_ago)
             
-            has_featured_image = random.choice([True, True, True, False])
             featured_image_url = ''
             featured_image_alt_text = ''
-            if has_featured_image:
-                featured_image_url = random.choice(featured_images)
-                featured_image_alt_text = f"{title} - Featured image showing {category_lower} setup"
             
             article = Article(
                 title=title,
