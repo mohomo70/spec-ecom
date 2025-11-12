@@ -1,29 +1,18 @@
-"""Sample data for freshwater fish ecommerce platform.
-Run with: python manage.py shell -c "from seed.sample import load_sample_data; load_sample_data()"
+"""
+Seed products data for freshwater fish ecommerce platform.
+Run with: python manage.py shell -c "from api.management.commands.seed_products import load_sample_data; load_sample_data()"
 """
 
-import shutil
-from pathlib import Path
+import os
 from django.conf import settings
-from api.models import Category, FishProduct, User
-from django.core.management import call_command
+from django.core.files import File
+from api.models import Category, FishProduct, ProductImage, User
 
 
 def load_sample_data():
     """Load comprehensive sample data for the freshwater fish ecommerce platform."""
 
     print("Loading sample data...")
-    
-    media_fish_dir = Path(settings.MEDIA_ROOT) / 'fish_images'
-    media_fish_dir.mkdir(parents=True, exist_ok=True)
-    
-    seed_images_dir = Path(__file__).parent / 'fish_images'
-    if seed_images_dir.exists():
-        for img_file in seed_images_dir.glob('*.png'):
-            dest_file = media_fish_dir / img_file.name
-            if not dest_file.exists():
-                shutil.copy2(img_file, dest_file)
-                print(f"Copied image: {img_file.name}")
 
     # Create categories
     categories_data = [
@@ -75,7 +64,7 @@ def load_sample_data():
         if created:
             print(f"Created category: {category.name}")
 
-    # Sample fish products
+    # Sample fish products with image mappings
     products_data = [
         # Community Fish
         {
@@ -98,6 +87,7 @@ def load_sample_data():
             'seo_title': 'Neon Tetra Fish - Schooling Community Fish',
             'seo_description': 'Buy vibrant Neon Tetra fish online. Perfect for beginners, stunning blue and red stripes.',
             'categories': [categories['community-fish'], categories['tetras-barbs']],
+            'image_path': None,
         },
         {
             'species_name': 'Guppy',
@@ -119,6 +109,7 @@ def load_sample_data():
             'seo_title': 'Guppy Fish - Colorful Livebearer Fish',
             'seo_description': 'Purchase beautiful Guppy fish online. Vibrant colors, easy care, perfect for beginners.',
             'categories': [categories['community-fish'], categories['livebearers']],
+            'image_path': 'products/2025/11/12/guppy.png',
         },
         {
             'species_name': 'Betta Fish',
@@ -139,8 +130,8 @@ def load_sample_data():
             'care_instructions': 'Provide warm water and hiding spots. Feed betta pellets daily. Clean water essential.',
             'seo_title': 'Betta Fish - Siamese Fighting Fish',
             'seo_description': 'Buy stunning Betta fish online. Vibrant colors, flowing fins, easy care.',
-            'image_url': f'/{settings.MEDIA_URL}fish_images/beta.png',
             'categories': [categories['community-fish']],
+            'image_path': 'products/2025/11/12/yupp-generated-image-478759.jpg',
         },
         {
             'species_name': 'Zebrafish',
@@ -162,6 +153,7 @@ def load_sample_data():
             'seo_title': 'Zebrafish - Active Striped Community Fish',
             'seo_description': 'Purchase Zebrafish online. Hardy, active swimmers with distinctive stripes.',
             'categories': [categories['community-fish'], categories['tetras-barbs']],
+            'image_path': None,
         },
 
         # Cichlids
@@ -185,6 +177,7 @@ def load_sample_data():
             'seo_title': 'Angelfish - Elegant Freshwater Cichlids',
             'seo_description': 'Buy beautiful Angelfish online. Graceful swimmers with flowing fins.',
             'categories': [categories['cichlids']],
+            'image_path': None,
         },
         {
             'species_name': 'Convict Cichlid',
@@ -206,6 +199,7 @@ def load_sample_data():
             'seo_title': 'Convict Cichlid - Bold Striped Cichlids',
             'seo_description': 'Purchase Convict Cichlids online. Active, good parents, natural tank cleaners.',
             'categories': [categories['cichlids']],
+            'image_path': None,
         },
 
         # Catfish
@@ -229,6 +223,7 @@ def load_sample_data():
             'seo_title': 'Corydoras Catfish - Peaceful Bottom Dwellers',
             'seo_description': 'Buy Corydoras catfish online. Peaceful scavengers that keep tanks clean.',
             'categories': [categories['catfish-bottom-dwellers']],
+            'image_path': None,
         },
         {
             'species_name': 'Plecostomus',
@@ -250,6 +245,7 @@ def load_sample_data():
             'seo_title': 'Plecostomus - Large Algae-Eating Catfish',
             'seo_description': 'Purchase Plecostomus catfish online. Natural algae eaters that grow large.',
             'categories': [categories['catfish-bottom-dwellers']],
+            'image_path': None,
         },
 
         # Goldfish
@@ -273,6 +269,7 @@ def load_sample_data():
             'seo_title': 'Fancy Goldfish - Beautiful Flowing Fin Varieties',
             'seo_description': 'Buy fancy Goldfish online. Oranda, Ryukin, Telescope varieties.',
             'categories': [categories['goldfish-koi']],
+            'image_path': None,
         },
         {
             'species_name': 'Shubunkin Goldfish',
@@ -294,6 +291,7 @@ def load_sample_data():
             'seo_title': 'Shubunkin Goldfish - Hardy Calico Goldfish',
             'seo_description': 'Purchase Shubunkin Goldfish online. Hardy, active swimmers with calico colors.',
             'categories': [categories['goldfish-koi']],
+            'image_path': None,
         },
 
         # More Tetras
@@ -317,6 +315,7 @@ def load_sample_data():
             'seo_title': 'Cardinal Tetra Fish - Stunning Red and Blue Tetras',
             'seo_description': 'Buy Cardinal Tetra fish online. Beautiful red and blue colors, peaceful schooling fish.',
             'categories': [categories['tetras-barbs'], categories['community-fish']],
+            'image_path': None,
         },
         {
             'species_name': 'Cherry Barb',
@@ -338,28 +337,51 @@ def load_sample_data():
             'seo_title': 'Cherry Barb Fish - Bright Red Schooling Fish',
             'seo_description': 'Purchase Cherry Barb fish online. Vibrant red color, peaceful and active.',
             'categories': [categories['tetras-barbs'], categories['community-fish']],
+            'image_path': None,
         },
     ]
 
     for product_data in products_data:
+        image_path = product_data.pop('image_path', None)
         categories_list = product_data.pop('categories')
-        image_url = product_data.pop('image_url', None)
-        if image_url:
-            product_data['image_url'] = image_url
         product, created = FishProduct.objects.get_or_create(
             species_name=product_data['species_name'],
             scientific_name=product_data['scientific_name'],
             defaults=product_data
         )
-        if image_url and not product.image_url:
-            product.image_url = image_url
-            product.save()
-        product.categories.set(categories_list)
-        product.save()
         if created:
+            product.categories.set(categories_list)
+            product.save()
             print(f"Created product: {product.species_name}")
-        elif image_url:
-            print(f"Updated product: {product.species_name} (image_url)")
+
+            # Add image if path is provided and file exists
+            if image_path:
+                media_root = settings.MEDIA_ROOT
+                full_image_path = os.path.join(media_root, image_path)
+                
+                if os.path.exists(full_image_path):
+                    # Check if image already exists for this product
+                    if not ProductImage.objects.filter(product=product, is_primary=True).exists():
+                        with open(full_image_path, 'rb') as f:
+                            product_image = ProductImage.objects.create(
+                                product=product,
+                                is_primary=True,
+                                display_order=0,
+                                alt_text=f"{product.species_name} - {product.scientific_name}",
+                                caption=f"Beautiful {product.species_name}"
+                            )
+                            # Use the existing path structure, Django will handle it
+                            filename = os.path.basename(image_path)
+                            product_image.image.save(
+                                filename,
+                                File(f),
+                                save=True
+                            )
+                            print(f"  Added image: {image_path}")
+                    else:
+                        print(f"  Image already exists for {product.species_name}")
+                else:
+                    print(f"  Warning: Image file not found: {full_image_path}")
 
     # Create a superuser for admin access
     if not User.objects.filter(username='admin').exists():
@@ -375,8 +397,10 @@ def load_sample_data():
     print("Sample data loaded successfully!")
     print(f"Created {Category.objects.count()} categories")
     print(f"Created {FishProduct.objects.count()} products")
+    print(f"Created {ProductImage.objects.count()} product images")
     print(f"Created {User.objects.filter(is_superuser=True).count()} admin users")
 
 
 if __name__ == '__main__':
     load_sample_data()
+
