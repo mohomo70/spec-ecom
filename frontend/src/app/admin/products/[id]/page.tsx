@@ -7,6 +7,8 @@ import Link from "next/link";
 import { adminApi, ProductDetail } from "@/lib/api/admin";
 import ProductForm from "@/components/admin/ProductForm";
 import ProductImageUpload from "@/components/admin/ProductImageUpload";
+import SuccessMessage from "@/components/admin/SuccessMessage";
+import ErrorMessage from "@/components/admin/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 
@@ -18,6 +20,7 @@ export default function ProductDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "products", id],
@@ -35,6 +38,10 @@ export default function ProductDetailPage({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products", id] });
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      setSuccessMessage("Product updated successfully!");
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -75,18 +82,27 @@ export default function ProductDetailPage({
         </Link>
       </div>
 
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
       {updateMutation.isError && (
-        <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-800">
-            {updateMutation.error instanceof Error
+        <ErrorMessage
+          message={
+            updateMutation.error instanceof Error
               ? updateMutation.error.message
-              : "Failed to update product. Please try again."}
-          </p>
-        </div>
+              : "Failed to update product. Please try again."
+          }
+          onRetry={() => updateMutation.reset()}
+          onDismiss={() => updateMutation.reset()}
+        />
       )}
 
       <ProductForm
         product={data}
+        productId={id}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={updateMutation.isPending}

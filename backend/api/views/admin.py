@@ -7,10 +7,14 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q, Sum
+from django.utils import timezone
+from datetime import timedelta
 from ..models import UserProfile, FishProduct, ProductImage, Category, CategoryImage, Order, Article, ArticleCategory, ArticleImage
 from ..serializers.admin import (
     UserAdminSerializer,
@@ -35,12 +39,126 @@ from ..serializers.admin import (
     ArticleAdminCreateSerializer,
     ArticleAdminUpdateSerializer,
     ArticleDetailAdminSerializer,
-    ArticleImageAdminSerializer
+    ArticleImageAdminSerializer,
+    ArticleCategoryAdminSerializer,
+    ArticleCategoryAdminCreateSerializer,
+    ArticleCategoryAdminUpdateSerializer
 )
 from ..permissions import IsAdminOnly
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
+
+class BulkOperationsMixin:
+    """Mixin for bulk operations on admin viewsets."""
+    
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request):
+        """Bulk create multiple instances."""
+        serializer = self.get_serializer(data=request.data.get('items', []), many=True)
+        serializer.is_valid(raise_exception=True)
+        instances = serializer.save()
+        logger.info(
+            f"Bulk created {len(instances)} {self.queryset.model.__name__} items by {request.user.email}",
+            extra={'admin_id': str(request.user.id), 'count': len(instances)}
+        )
+        return Response(
+            self.get_serializer(instances, many=True, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+    
+    @action(detail=False, methods=['patch'], url_path='bulk-update')
+    def bulk_update(self, request):
+        """Bulk update multiple instances."""
+        items = request.data.get('items', [])
+        updated = []
+        errors = []
+        
+        for item_data in items:
+            instance_id = item_data.get('id')
+            if not instance_id:
+                errors.append({'id': None, 'error': 'ID is required'})
+                continue
+            
+            try:
+                instance = self.get_queryset().get(id=instance_id)
+                serializer = self.get_serializer(instance, data=item_data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                updated.append(instance)
+            except self.queryset.model.DoesNotExist:
+                errors.append({'id': instance_id, 'error': 'Not found'})
+            except Exception as e:
+                errors.append({'id': instance_id, 'error': str(e)})
+        
+        logger.info(
+            f"Bulk updated {len(updated)} {self.queryset.model.__name__} items by {request.user.email}",
+            extra={'admin_id': str(request.user.id), 'count': len(updated), 'errors': len(errors)}
+        )
+        
+        response_data = {
+            'updated': self.get_serializer(updated, many=True, context={'request': request}).data,
+            'errors': errors
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    @action(detail=False, methods=['delete'], url_path='bulk-delete')
+    def bulk_delete(self, request):
+        """Bulk delete multiple instances."""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response(
+                {'error': 'ids_required', 'message': 'IDs list is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(id__in=ids)
+        count = queryset.count()
+        queryset.delete()
+        
+        logger.info(
+            f"Bulk deleted {count} {self.queryset.model.__name__} items by {request.user.email}",
+            extra={'admin_id': str(request.user.id), 'count': count, 'ids': ids}
+        )
+        
+        return Response(
+            {'deleted_count': count, 'ids': ids},
+            status=status.HTTP_200_OK
+        )
+    
+    @action(detail=False, methods=['patch'], url_path='bulk-status-change')
+    def bulk_status_change(self, request):
+        """Bulk change status field for multiple instances."""
+        ids = request.data.get('ids', [])
+        status_field = request.data.get('status_field', 'is_active')
+        status_value = request.data.get('status_value')
+        
+        if not ids:
+            return Response(
+                {'error': 'ids_required', 'message': 'IDs list is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if status_value is None:
+            return Response(
+                {'error': 'status_value_required', 'message': 'Status value is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(id__in=ids)
+        update_kwargs = {status_field: status_value}
+        count = queryset.update(**update_kwargs)
+        
+        logger.info(
+            f"Bulk changed {status_field} to {status_value} for {count} {self.queryset.model.__name__} items by {request.user.email}",
+            extra={'admin_id': str(request.user.id), 'count': count, 'ids': ids, 'status_field': status_field, 'status_value': status_value}
+        )
+        
+        return Response(
+            {'updated_count': count, 'ids': ids, 'status_field': status_field, 'status_value': status_value},
+            status=status.HTTP_200_OK
+        )
 
 
 class AdminPagination(PageNumberPagination):
@@ -49,7 +167,7 @@ class AdminPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class UserAdminViewSet(viewsets.ModelViewSet):
+class UserAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for User management."""
     
     queryset = User.objects.all().order_by('-date_joined')
@@ -151,7 +269,7 @@ class UserAdminViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class ProductAdminViewSet(viewsets.ModelViewSet):
+class ProductAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for Product management."""
     
     queryset = FishProduct.objects.all().prefetch_related('categories', 'product_images')
@@ -203,6 +321,23 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        if 'updated_at' in request.data:
+            client_updated_at = request.data.get('updated_at')
+            if client_updated_at:
+                from django.utils.dateparse import parse_datetime
+                client_time = parse_datetime(client_updated_at)
+                if client_time and instance.updated_at and client_time < instance.updated_at:
+                    return Response(
+                        {
+                            'error': 'conflict',
+                            'message': 'This record has been modified by another user. Please reload and try again.',
+                            'conflict': True,
+                            'current_updated_at': instance.updated_at.isoformat()
+                        },
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -285,7 +420,7 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class CategoryAdminViewSet(viewsets.ModelViewSet):
+class CategoryAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for Category management."""
     
     queryset = Category.objects.all().select_related('parent_category').prefetch_related('category_images', 'products')
@@ -324,6 +459,23 @@ class CategoryAdminViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        if 'updated_at' in request.data:
+            client_updated_at = request.data.get('updated_at')
+            if client_updated_at:
+                from django.utils.dateparse import parse_datetime
+                client_time = parse_datetime(client_updated_at)
+                if client_time and hasattr(instance, 'updated_at') and instance.updated_at and client_time < instance.updated_at:
+                    return Response(
+                        {
+                            'error': 'conflict',
+                            'message': 'This record has been modified by another user. Please reload and try again.',
+                            'conflict': True,
+                            'current_updated_at': instance.updated_at.isoformat()
+                        },
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -427,7 +579,7 @@ class OrderAdminViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(OrderDetailAdminSerializer(instance, context={'request': request}).data)
 
 
-class ArticleAdminViewSet(viewsets.ModelViewSet):
+class ArticleAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for Article management."""
     
     queryset = Article.objects.all().select_related('category', 'author').prefetch_related('article_images')
@@ -466,6 +618,23 @@ class ArticleAdminViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        if 'updated_at' in request.data:
+            client_updated_at = request.data.get('updated_at')
+            if client_updated_at:
+                from django.utils.dateparse import parse_datetime
+                client_time = parse_datetime(client_updated_at)
+                if client_time and instance.updated_at and client_time < instance.updated_at:
+                    return Response(
+                        {
+                            'error': 'conflict',
+                            'message': 'This record has been modified by another user. Please reload and try again.',
+                            'conflict': True,
+                            'current_updated_at': instance.updated_at.isoformat()
+                        },
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -526,3 +695,102 @@ class ArticleAdminViewSet(viewsets.ModelViewSet):
         
         image.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ArticleCategoryAdminViewSet(viewsets.ModelViewSet):
+    """Admin viewset for ArticleCategory management."""
+    
+    queryset = ArticleCategory.objects.all().prefetch_related('articles')
+    permission_classes = [permissions.IsAuthenticated, IsAdminOnly]
+    pagination_class = AdminPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'slug', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ArticleCategoryAdminCreateSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ArticleCategoryAdminUpdateSerializer
+        return ArticleCategoryAdminSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        category = serializer.save()
+        logger.info(
+            f"Article category created via admin dashboard: {category.name} by {request.user.email}",
+            extra={'category_id': str(category.id), 'admin_id': str(request.user.id)}
+        )
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            ArticleCategoryAdminSerializer(category, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        logger.info(
+            f"Article category updated via admin dashboard: {instance.name} by {request.user.email}",
+            extra={'category_id': str(instance.id), 'admin_id': str(request.user.id)}
+        )
+        return Response(ArticleCategoryAdminSerializer(instance, context={'request': request}).data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        article_count = instance.articles.count()
+        if article_count > 0:
+            return Response(
+                {
+                    'error': 'cannot_delete',
+                    'message': f'Cannot delete category "{instance.name}" because it has {article_count} associated article(s).',
+                    'article_count': article_count
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        self.perform_destroy(instance)
+        logger.info(
+            f"Article category deleted via admin dashboard: {instance.name} by {request.user.email}",
+            extra={'category_id': str(instance.id), 'admin_id': str(request.user.id)}
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DashboardStatsView(APIView):
+    """Dashboard statistics endpoint."""
+    
+    permission_classes = [permissions.IsAuthenticated, IsAdminOnly]
+
+    def get(self, request):
+        """Get dashboard statistics."""
+        now = timezone.now()
+        last_30_days = now - timedelta(days=30)
+        
+        stats = {
+            'total_products': FishProduct.objects.count(),
+            'available_products': FishProduct.objects.filter(is_available=True).count(),
+            'total_orders': Order.objects.count(),
+            'pending_orders': Order.objects.filter(status='pending').count(),
+            'total_users': User.objects.count(),
+            'active_users': User.objects.filter(is_active=True).count(),
+            'total_categories': Category.objects.filter(is_active=True).count(),
+            'total_articles': Article.objects.count(),
+            'published_articles': Article.objects.filter(status='published').count(),
+            'recent_orders_30d': Order.objects.filter(created_at__gte=last_30_days).count(),
+            'revenue_30d': float(
+                Order.objects.filter(
+                    created_at__gte=last_30_days,
+                    payment_status='paid'
+                ).aggregate(
+                    total=Sum('total_amount')
+                )['total'] or 0
+            ),
+        }
+        
+        return Response(stats)

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { adminApi, User } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import UserTable from "@/components/admin/UserTable";
+import Pagination from "@/components/admin/Pagination";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import EmptyState from "@/components/admin/EmptyState";
 import { getCurrentUser } from "@/lib/auth";
@@ -16,6 +17,8 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const currentUser = getCurrentUser();
 
   const { data, isLoading, error } = useQuery({
@@ -32,6 +35,38 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      setSuccessMessage("User deleted successfully!");
+    },
+    onError: () => {
+      setSuccessMessage(null);
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await adminApi.bulkDelete("users", ids);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      setSuccessMessage(`${selectedIds.length} users deleted successfully!`);
+      setSelectedIds([]);
+    },
+    onError: () => {
+      setSuccessMessage(null);
+    },
+  });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, statusField, statusValue }: { ids: string[]; statusField: string; statusValue: any }) => {
+      await adminApi.bulkStatusChange("users", ids, statusField, statusValue);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      setSuccessMessage(`Status updated for ${selectedIds.length} users!`);
+      setSelectedIds([]);
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -41,8 +76,19 @@ export default function UsersPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Error loading users. Please try again.</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Users</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Manage user accounts and permissions
+            </p>
+          </div>
+        </div>
+        <ErrorMessage
+          message="Error loading users. Please try again."
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
+        />
       </div>
     );
   }
@@ -63,18 +109,33 @@ export default function UsersPage() {
         </Link>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+      <SearchFilter
+        searchValue={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        placeholder="Search users..."
+      />
+
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
         />
-      </div>
+      )}
+
+      {deleteMutation.isError && (
+        <ErrorMessage
+          message={
+            deleteMutation.error instanceof Error
+              ? deleteMutation.error.message
+              : "Failed to delete user. Please try again."
+          }
+          onRetry={() => deleteMutation.reset()}
+          onDismiss={() => deleteMutation.reset()}
+        />
+      )}
 
       {users.length === 0 ? (
         <EmptyState
@@ -85,32 +146,35 @@ export default function UsersPage() {
         />
       ) : (
         <>
+          <BulkActions
+            selectedIds={selectedIds}
+            onBulkDelete={async (ids) => await bulkDeleteMutation.mutateAsync(ids)}
+            onBulkStatusChange={async (ids, statusField, statusValue) =>
+              await bulkStatusMutation.mutateAsync({ ids, statusField, statusValue })
+            }
+            statusOptions={[
+              { value: true, label: "Active" },
+              { value: false, label: "Inactive" },
+            ]}
+            statusField="is_active"
+            entityName="users"
+          />
           <UserTable
             users={users}
             onDelete={(id) => deleteMutation.mutate(id)}
             currentUserId={currentUser?.id}
+            onSelectionChange={setSelectedIds}
+            selectedIds={selectedIds}
           />
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Showing {users.length} of {data?.count || 0} users
-            </p>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                disabled={!data?.previous}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!data?.next}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={data?.total_pages}
+            hasNext={!!data?.next}
+            hasPrevious={!!data?.previous}
+            onPageChange={setPage}
+            totalCount={data?.count}
+            pageSize={20}
+          />
         </>
       )}
     </div>

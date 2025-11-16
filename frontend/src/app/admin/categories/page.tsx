@@ -5,6 +5,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { adminApi } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
+import CategoryTree from "@/components/admin/CategoryTree";
+import Pagination from "@/components/admin/Pagination";
+import SearchFilter from "@/components/admin/SearchFilter";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import EmptyState from "@/components/admin/EmptyState";
 
@@ -58,18 +61,14 @@ export default function CategoriesPage() {
         </Link>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          placeholder="Search categories..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
-      </div>
+      <SearchFilter
+        searchValue={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        placeholder="Search categories..."
+      />
 
       {categories.length === 0 ? (
         <EmptyState
@@ -80,63 +79,19 @@ export default function CategoriesPage() {
         />
       ) : (
         <>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {categories.map((category: any) => (
-                <li key={category.id}>
-                  <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{category.name}</p>
-                        <p className="text-sm text-gray-500">{category.description || "No description"}</p>
-                        {category.parent_name && (
-                          <p className="text-xs text-gray-400">Parent: {category.parent_name}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Link href={`/admin/categories/${category.id}`}>
-                        <Button variant="outline" size="sm">Edit</Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm("Are you sure you want to delete this category?")) {
-                            deleteMutation.mutate(category.id);
-                          }
-                        }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Showing {categories.length} of {data?.count || 0} categories
-            </p>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                disabled={!data?.previous}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!data?.next}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <CategoryTree
+            categories={categories}
+            onDelete={(id) => deleteMutation.mutate(id)}
+          />
+          <Pagination
+            currentPage={page}
+            totalPages={data?.total_pages}
+            hasNext={!!data?.next}
+            hasPrevious={!!data?.previous}
+            onPageChange={setPage}
+            totalCount={data?.count}
+            pageSize={20}
+          />
         </>
       )}
     </div>

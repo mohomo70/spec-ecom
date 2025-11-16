@@ -5,6 +5,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { adminApi } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
+import ArticleTable from "@/components/admin/ArticleTable";
+import Pagination from "@/components/admin/Pagination";
+import SearchFilter from "@/components/admin/SearchFilter";
+import BulkActions from "@/components/admin/BulkActions";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import EmptyState from "@/components/admin/EmptyState";
 
@@ -13,6 +17,7 @@ export default function ArticlesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "articles", page, search, statusFilter],
@@ -30,6 +35,26 @@ export default function ArticlesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await adminApi.bulkDelete("articles", ids);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+      setSelectedIds([]);
+    },
+  });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, statusField, statusValue }: { ids: string[]; statusField: string; statusValue: any }) => {
+      await adminApi.bulkStatusChange("articles", ids, statusField, statusValue);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+      setSelectedIds([]);
     },
   });
 
@@ -61,30 +86,29 @@ export default function ArticlesPage() {
         </Link>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          placeholder="Search articles..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-        </select>
-      </div>
+      <SearchFilter
+        searchValue={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        placeholder="Search articles..."
+        filters={[
+          {
+            label: "Status",
+            name: "status",
+            value: statusFilter,
+            onChange: (value) => {
+              setStatusFilter(value);
+              setPage(1);
+            },
+            options: [
+              { value: "draft", label: "Draft" },
+              { value: "published", label: "Published" },
+            ],
+          },
+        ]}
+      />
 
       {articles.length === 0 ? (
         <EmptyState
@@ -95,64 +119,34 @@ export default function ArticlesPage() {
         />
       ) : (
         <>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {articles.map((article: any) => (
-                <li key={article.id}>
-                  <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{article.title}</p>
-                      <p className="text-sm text-gray-500">{article.category_name}</p>
-                      <p className="text-xs text-gray-400">By {article.author_name}</p>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        article.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {article.status}
-                      </span>
-                      <Link href={`/admin/articles/${article.id}`}>
-                        <Button variant="outline" size="sm">Edit</Button>
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm("Are you sure you want to delete this article?")) {
-                            deleteMutation.mutate(article.id);
-                          }
-                        }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Showing {articles.length} of {data?.count || 0} articles
-            </p>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                disabled={!data?.previous}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!data?.next}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <BulkActions
+            selectedIds={selectedIds}
+            onBulkDelete={async (ids) => await bulkDeleteMutation.mutateAsync(ids)}
+            onBulkStatusChange={async (ids, statusField, statusValue) =>
+              await bulkStatusMutation.mutateAsync({ ids, statusField, statusValue })
+            }
+            statusOptions={[
+              { value: "draft", label: "Draft" },
+              { value: "published", label: "Published" },
+            ]}
+            statusField="status"
+            entityName="articles"
+          />
+          <ArticleTable
+            articles={articles}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onSelectionChange={setSelectedIds}
+            selectedIds={selectedIds}
+          />
+          <Pagination
+            currentPage={page}
+            totalPages={data?.total_pages}
+            hasNext={!!data?.next}
+            hasPrevious={!!data?.previous}
+            onPageChange={setPage}
+            totalCount={data?.count}
+            pageSize={20}
+          />
         </>
       )}
     </div>

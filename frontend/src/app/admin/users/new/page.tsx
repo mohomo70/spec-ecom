@@ -1,15 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { adminApi, UserFormData } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import UserForm from "@/components/admin/UserForm";
+import SuccessMessage from "@/components/admin/SuccessMessage";
+import ErrorMessage from "@/components/admin/ErrorMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewUserPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: async (formData: UserFormData) => {
@@ -27,7 +31,13 @@ export default function NewUserPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      router.push("/admin/users");
+      setSuccessMessage("User created successfully!");
+      setTimeout(() => {
+        router.push("/admin/users");
+      }, 1500);
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -41,6 +51,25 @@ export default function NewUserPage() {
           </p>
         </div>
       </div>
+
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
+
+      {createMutation.isError && (
+        <ErrorMessage
+          message={
+            createMutation.error instanceof Error
+              ? createMutation.error.message
+              : "Failed to create user. Please try again."
+          }
+          onRetry={() => createMutation.reset()}
+          onDismiss={() => createMutation.reset()}
+        />
+      )}
 
       <Card>
         <CardHeader>

@@ -7,6 +7,11 @@ import Link from "next/link";
 import { adminApi, Product } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import ProductTable from "@/components/admin/ProductTable";
+import Pagination from "@/components/admin/Pagination";
+import SearchFilter from "@/components/admin/SearchFilter";
+import BulkActions from "@/components/admin/BulkActions";
+import SuccessMessage from "@/components/admin/SuccessMessage";
+import ErrorMessage from "@/components/admin/ErrorMessage";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import EmptyState from "@/components/admin/EmptyState";
 
@@ -15,6 +20,8 @@ export default function ProductsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     is_available: undefined as boolean | undefined,
     difficulty_level: "",
@@ -39,6 +46,38 @@ export default function ProductsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      setSuccessMessage("Product deleted successfully!");
+    },
+    onError: () => {
+      setSuccessMessage(null);
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await adminApi.bulkDelete("products", ids);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      setSuccessMessage(`${selectedIds.length} products deleted successfully!`);
+      setSelectedIds([]);
+    },
+    onError: () => {
+      setSuccessMessage(null);
+    },
+  });
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async ({ ids, statusField, statusValue }: { ids: string[]; statusField: string; statusValue: any }) => {
+      await adminApi.bulkStatusChange("products", ids, statusField, statusValue);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      setSuccessMessage(`Status updated for ${selectedIds.length} products!`);
+      setSelectedIds([]);
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -48,8 +87,19 @@ export default function ProductsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-600">Error loading products. Please try again.</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Manage fish products and inventory
+            </p>
+          </div>
+        </div>
+        <ErrorMessage
+          message="Error loading products. Please try again."
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ["admin", "products"] })}
+        />
       </div>
     );
   }
@@ -70,59 +120,79 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+      <SearchFilter
+        searchValue={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        placeholder="Search products..."
+        filters={[
+          {
+            label: "Status",
+            name: "is_available",
+            value: filters.is_available === undefined ? "" : String(filters.is_available),
+            onChange: (value) => {
+              setFilters({
+                ...filters,
+                is_available: value === "" ? undefined : value === "true",
+              });
+              setPage(1);
+            },
+            options: [
+              { value: "true", label: "Available" },
+              { value: "false", label: "Unavailable" },
+            ],
+          },
+          {
+            label: "Difficulty",
+            name: "difficulty_level",
+            value: filters.difficulty_level,
+            onChange: (value) => {
+              setFilters({ ...filters, difficulty_level: value });
+              setPage(1);
+            },
+            options: [
+              { value: "beginner", label: "Beginner" },
+              { value: "intermediate", label: "Intermediate" },
+              { value: "advanced", label: "Advanced" },
+            ],
+          },
+          {
+            label: "Diet Type",
+            name: "diet_type",
+            value: filters.diet_type,
+            onChange: (value) => {
+              setFilters({ ...filters, diet_type: value });
+              setPage(1);
+            },
+            options: [
+              { value: "herbivore", label: "Herbivore" },
+              { value: "carnivore", label: "Carnivore" },
+              { value: "omnivore", label: "Omnivore" },
+            ],
+          },
+        ]}
+      />
+
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
         />
-        <select
-          value={filters.is_available === undefined ? "" : String(filters.is_available)}
-          onChange={(e) => {
-            setFilters({
-              ...filters,
-              is_available: e.target.value === "" ? undefined : e.target.value === "true",
-            });
-            setPage(1);
-          }}
-          className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">All Status</option>
-          <option value="true">Available</option>
-          <option value="false">Unavailable</option>
-        </select>
-        <select
-          value={filters.difficulty_level}
-          onChange={(e) => {
-            setFilters({ ...filters, difficulty_level: e.target.value });
-            setPage(1);
-          }}
-          className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">All Difficulties</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="advanced">Advanced</option>
-        </select>
-        <select
-          value={filters.diet_type}
-          onChange={(e) => {
-            setFilters({ ...filters, diet_type: e.target.value });
-            setPage(1);
-          }}
-          className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        >
-          <option value="">All Diet Types</option>
-          <option value="herbivore">Herbivore</option>
-          <option value="carnivore">Carnivore</option>
-          <option value="omnivore">Omnivore</option>
-        </select>
-      </div>
+      )}
+
+      {deleteMutation.isError && (
+        <ErrorMessage
+          message={
+            deleteMutation.error instanceof Error
+              ? deleteMutation.error.message
+              : "Failed to delete product. Please try again."
+          }
+          onRetry={() => deleteMutation.reset()}
+          onDismiss={() => deleteMutation.reset()}
+        />
+      )}
 
       {products.length === 0 ? (
         <EmptyState
@@ -133,31 +203,34 @@ export default function ProductsPage() {
         />
       ) : (
         <>
+          <BulkActions
+            selectedIds={selectedIds}
+            onBulkDelete={async (ids) => await bulkDeleteMutation.mutateAsync(ids)}
+            onBulkStatusChange={async (ids, statusField, statusValue) =>
+              await bulkStatusMutation.mutateAsync({ ids, statusField, statusValue })
+            }
+            statusOptions={[
+              { value: true, label: "Available" },
+              { value: false, label: "Unavailable" },
+            ]}
+            statusField="is_available"
+            entityName="products"
+          />
           <ProductTable
             products={products}
             onDelete={(id) => deleteMutation.mutate(id)}
+            onSelectionChange={setSelectedIds}
+            selectedIds={selectedIds}
           />
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Showing {products.length} of {data?.count || 0} products
-            </p>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                disabled={!data?.previous}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!data?.next}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={data?.total_pages}
+            hasNext={!!data?.next}
+            hasPrevious={!!data?.previous}
+            onPageChange={setPage}
+            totalCount={data?.count}
+            pageSize={20}
+          />
         </>
       )}
     </div>

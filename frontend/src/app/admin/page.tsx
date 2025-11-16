@@ -6,14 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 
 export default function AdminDashboardPage() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: statsResponse, isLoading } = useQuery({
     queryKey: ["admin", "dashboard", "stats"],
     queryFn: async () => {
-      const response = await adminApi.get("/dashboard/stats");
-      return response.data;
+      const response = await adminApi.getDashboardStats();
+      return response.data || {};
     },
     retry: 1,
   });
+
+  const stats = statsResponse || {};
 
   if (isLoading) {
     return <LoadingIndicator text="Loading dashboard..." />;

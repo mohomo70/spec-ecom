@@ -506,6 +506,27 @@ class OrderAdminUpdateSerializer(serializers.ModelSerializer):
             'estimated_delivery', 'order_notes', 'updated_at'
         ]
 
+    def validate_status(self, value):
+        """Validate order status transitions."""
+        if self.instance:
+            current_status = self.instance.status
+            valid_transitions = {
+                'pending': ['confirmed', 'cancelled'],
+                'confirmed': ['processing', 'cancelled'],
+                'processing': ['shipped', 'cancelled'],
+                'shipped': ['delivered', 'cancelled'],
+                'delivered': [],
+                'cancelled': [],
+            }
+            
+            if current_status in valid_transitions:
+                if value not in valid_transitions[current_status] and value != current_status:
+                    raise serializers.ValidationError(
+                        f"Cannot transition from {current_status} to {value}. "
+                        f"Valid transitions: {', '.join(valid_transitions[current_status])}"
+                    )
+        return value
+
 
 class OrderDetailAdminSerializer(serializers.ModelSerializer):
     """Admin serializer for order detail view with items."""
@@ -608,6 +629,49 @@ class ArticleAdminCreateSerializer(serializers.ModelSerializer):
         validated_data['category'] = category
         validated_data['author'] = self.context['request'].user
         return Article.objects.create(**validated_data)
+
+
+class ArticleCategoryAdminSerializer(serializers.ModelSerializer):
+    """Admin serializer for article categories."""
+    article_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ArticleCategory
+        fields = ['id', 'name', 'slug', 'description', 'created_at', 'article_count']
+        read_only_fields = ['id', 'slug', 'created_at', 'article_count']
+
+    def get_article_count(self, obj):
+        return obj.articles.count()
+
+
+class ArticleCategoryAdminCreateSerializer(serializers.ModelSerializer):
+    """Admin serializer for creating article categories."""
+    
+    class Meta:
+        model = ArticleCategory
+        fields = ['name', 'slug', 'description']
+        read_only_fields = ['slug']
+
+    def create(self, validated_data):
+        name = validated_data.get('name')
+        if not validated_data.get('slug'):
+            from django.utils.text import slugify
+            validated_data['slug'] = slugify(name)
+        return super().create(validated_data)
+
+
+class ArticleCategoryAdminUpdateSerializer(serializers.ModelSerializer):
+    """Admin serializer for updating article categories."""
+    
+    class Meta:
+        model = ArticleCategory
+        fields = ['name', 'slug', 'description']
+
+    def validate_slug(self, value):
+        if value:
+            from django.utils.text import slugify
+            return slugify(value)
+        return value
 
 
 class ArticleAdminUpdateSerializer(serializers.ModelSerializer):

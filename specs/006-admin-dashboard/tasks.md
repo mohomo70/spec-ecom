@@ -85,22 +85,22 @@
 
 ### Implementation for User Story 2
 
-- [ ] T028 [P] [US2] Create product list viewset in backend/api/views/admin.py (ProductAdminViewSet)
-- [ ] T029 [P] [US2] Create product admin serializer in backend/api/serializers/admin.py (ProductAdminSerializer, ProductAdminCreateSerializer, ProductAdminUpdateSerializer)
-- [ ] T030 [US2] Add product endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
-- [ ] T031 [US2] Add product image upload endpoint in backend/api/views/admin.py (ProductImageUploadView)
-- [ ] T032 [US2] Add product image endpoints to backend/api/urls/admin.py
-- [ ] T033 [US2] Create product API functions in frontend/src/lib/api/admin.ts (getProducts, createProduct, updateProduct, deleteProduct, uploadProductImage)
-- [ ] T034 [US2] Create product list page in frontend/src/app/admin/products/page.tsx
-- [ ] T035 [US2] Create product table component in frontend/src/components/admin/ProductTable.tsx
-- [ ] T036 [US2] Create product form component in frontend/src/components/admin/ProductForm.tsx
-- [ ] T037 [US2] Create product create page in frontend/src/app/admin/products/new/page.tsx
-- [ ] T038 [US2] Create product edit page in frontend/src/app/admin/products/[id]/page.tsx
-- [ ] T039 [US2] Create product image upload component in frontend/src/components/admin/ProductImageUpload.tsx
-- [ ] T040 [US2] Add product search and filter functionality in frontend/src/components/admin/ProductTable.tsx
-- [ ] T041 [US2] Add conflict detection for product updates in backend/api/views/admin.py (check updated_at)
-- [ ] T042 [US2] Create conflict warning component in frontend/src/components/admin/ConflictWarning.tsx
-- [ ] T043 [US2] Integrate conflict detection in frontend/src/components/admin/ProductForm.tsx
+- [x] T028 [P] [US2] Create product list viewset in backend/api/views/admin.py (ProductAdminViewSet)
+- [x] T029 [P] [US2] Create product admin serializer in backend/api/serializers/admin.py (ProductAdminSerializer, ProductAdminCreateSerializer, ProductAdminUpdateSerializer)
+- [x] T030 [US2] Add product endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
+- [x] T031 [US2] Add product image upload endpoint in backend/api/views/admin.py (ProductImageUploadView)
+- [x] T032 [US2] Add product image endpoints to backend/api/urls/admin.py
+- [x] T033 [US2] Create product API functions in frontend/src/lib/api/admin.ts (getProducts, createProduct, updateProduct, deleteProduct, uploadProductImage)
+- [x] T034 [US2] Create product list page in frontend/src/app/admin/products/page.tsx
+- [x] T035 [US2] Create product table component in frontend/src/components/admin/ProductTable.tsx
+- [x] T036 [US2] Create product form component in frontend/src/components/admin/ProductForm.tsx
+- [x] T037 [US2] Create product create page in frontend/src/app/admin/products/new/page.tsx
+- [x] T038 [US2] Create product edit page in frontend/src/app/admin/products/[id]/page.tsx
+- [x] T039 [US2] Create product image upload component in frontend/src/components/admin/ProductImageUpload.tsx
+- [x] T040 [US2] Add product search and filter functionality in frontend/src/components/admin/ProductTable.tsx
+- [x] T041 [US2] Add conflict detection for product updates in backend/api/views/admin.py (check updated_at)
+- [x] T042 [US2] Create conflict warning component in frontend/src/components/admin/ConflictWarning.tsx
+- [x] T043 [US2] Integrate conflict detection in frontend/src/components/admin/ProductForm.tsx
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -114,21 +114,21 @@
 
 ### Implementation for User Story 3
 
-- [ ] T044 [P] [US3] Create category list viewset in backend/api/views/admin.py (CategoryAdminViewSet)
-- [ ] T045 [P] [US3] Create category admin serializer in backend/api/serializers/admin.py (CategoryAdminSerializer, CategoryAdminCreateSerializer, CategoryAdminUpdateSerializer)
-- [ ] T046 [US3] Add category endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
-- [ ] T047 [US3] Add category image upload endpoint in backend/api/views/admin.py (CategoryImageUploadView)
-- [ ] T048 [US3] Add circular parent relationship validation in backend/api/serializers/admin.py
-- [ ] T049 [US3] Create category API functions in frontend/src/lib/api/admin.ts (getCategories, createCategory, updateCategory, deleteCategory, uploadCategoryImage)
-- [ ] T050 [US3] Create category list page in frontend/src/app/admin/categories/page.tsx
-- [ ] T051 [US3] Create category tree component in frontend/src/components/admin/CategoryTree.tsx (hierarchical display)
-- [ ] T052 [US3] Create category form component in frontend/src/components/admin/CategoryForm.tsx
-- [ ] T053 [US3] Create category create page in frontend/src/app/admin/categories/new/page.tsx
-- [ ] T054 [US3] Create category edit page in frontend/src/app/admin/categories/[id]/page.tsx
-- [ ] T055 [US3] Add category reordering functionality in frontend/src/components/admin/CategoryTree.tsx
-- [ ] T056 [US3] Add conflict detection for category updates in backend/api/views/admin.py
-- [ ] T057 [US3] Integrate conflict detection in frontend/src/components/admin/CategoryForm.tsx
-- [ ] T058 [US3] Add prevent delete validation for categories with products in backend/api/views/admin.py
+- [x] T044 [P] [US3] Create category list viewset in backend/api/views/admin.py (CategoryAdminViewSet)
+- [x] T045 [P] [US3] Create category admin serializer in backend/api/serializers/admin.py (CategoryAdminSerializer, CategoryAdminCreateSerializer, CategoryAdminUpdateSerializer)
+- [x] T046 [US3] Add category endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
+- [x] T047 [US3] Add category image upload endpoint in backend/api/views/admin.py (CategoryImageUploadView)
+- [x] T048 [US3] Add circular parent relationship validation in backend/api/serializers/admin.py
+- [x] T049 [US3] Create category API functions in frontend/src/lib/api/admin.ts (getCategories, createCategory, updateCategory, deleteCategory, uploadCategoryImage)
+- [x] T050 [US3] Create category list page in frontend/src/app/admin/categories/page.tsx
+- [x] T051 [US3] Create category tree component in frontend/src/components/admin/CategoryTree.tsx (hierarchical display)
+- [x] T052 [US3] Create category form component in frontend/src/components/admin/CategoryForm.tsx
+- [x] T053 [US3] Create category create page in frontend/src/app/admin/categories/new/page.tsx
+- [x] T054 [US3] Create category edit page in frontend/src/app/admin/categories/[id]/page.tsx
+- [x] T055 [US3] Add category reordering functionality in frontend/src/components/admin/CategoryTree.tsx
+- [x] T056 [US3] Add conflict detection for category updates in backend/api/views/admin.py
+- [x] T057 [US3] Integrate conflict detection in frontend/src/components/admin/CategoryForm.tsx
+- [x] T058 [US3] Add prevent delete validation for categories with products in backend/api/views/admin.py
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work independently
 
@@ -142,18 +142,18 @@
 
 ### Implementation for User Story 4
 
-- [ ] T059 [P] [US4] Create order list viewset in backend/api/views/admin.py (OrderAdminViewSet)
-- [ ] T060 [P] [US4] Create order admin serializer in backend/api/serializers/admin.py (OrderAdminSerializer, OrderAdminUpdateSerializer, OrderDetailSerializer)
-- [ ] T061 [US4] Add order endpoints to backend/api/urls/admin.py (list, retrieve, update)
-- [ ] T062 [US4] Add order filtering by status, payment_status, date in backend/api/views/admin.py
-- [ ] T063 [US4] Create order API functions in frontend/src/lib/api/admin.ts (getOrders, getOrder, updateOrder)
-- [ ] T064 [US4] Create order list page in frontend/src/app/admin/orders/page.tsx
-- [ ] T065 [US4] Create order table component in frontend/src/components/admin/OrderTable.tsx
-- [ ] T066 [US4] Create order detail page in frontend/src/app/admin/orders/[id]/page.tsx
-- [ ] T067 [US4] Create order detail component in frontend/src/components/admin/OrderDetail.tsx
-- [ ] T068 [US4] Create order status update component in frontend/src/components/admin/OrderStatusUpdate.tsx
-- [ ] T069 [US4] Add order filtering UI in frontend/src/components/admin/OrderTable.tsx
-- [ ] T070 [US4] Add order status validation in backend/api/serializers/admin.py (valid transitions)
+- [x] T059 [P] [US4] Create order list viewset in backend/api/views/admin.py (OrderAdminViewSet)
+- [x] T060 [P] [US4] Create order admin serializer in backend/api/serializers/admin.py (OrderAdminSerializer, OrderAdminUpdateSerializer, OrderDetailSerializer)
+- [x] T061 [US4] Add order endpoints to backend/api/urls/admin.py (list, retrieve, update)
+- [x] T062 [US4] Add order filtering by status, payment_status, date in backend/api/views/admin.py
+- [x] T063 [US4] Create order API functions in frontend/src/lib/api/admin.ts (getOrders, getOrder, updateOrder)
+- [x] T064 [US4] Create order list page in frontend/src/app/admin/orders/page.tsx
+- [x] T065 [US4] Create order table component in frontend/src/components/admin/OrderTable.tsx
+- [x] T066 [US4] Create order detail page in frontend/src/app/admin/orders/[id]/page.tsx
+- [x] T067 [US4] Create order detail component in frontend/src/components/admin/OrderDetail.tsx
+- [x] T068 [US4] Create order status update component in frontend/src/components/admin/OrderStatusUpdate.tsx
+- [x] T069 [US4] Add order filtering UI in frontend/src/components/admin/OrderTable.tsx
+- [x] T070 [US4] Add order status validation in backend/api/serializers/admin.py (valid transitions)
 
 **Checkpoint**: At this point, User Stories 1, 2, 3, AND 4 should all work independently
 
@@ -167,22 +167,22 @@
 
 ### Implementation for User Story 5
 
-- [ ] T071 [P] [US5] Create article list viewset in backend/api/views/admin.py (ArticleAdminViewSet)
-- [ ] T072 [P] [US5] Create article admin serializer in backend/api/serializers/admin.py (ArticleAdminSerializer, ArticleAdminCreateSerializer, ArticleAdminUpdateSerializer)
-- [ ] T073 [US5] Add article endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
-- [ ] T074 [US5] Add article category endpoints in backend/api/views/admin.py (ArticleCategoryAdminViewSet)
-- [ ] T075 [US5] Add article image upload endpoint in backend/api/views/admin.py (ArticleImageUploadView)
-- [ ] T076 [US5] Add auto-set published_at on status change in backend/api/views/admin.py
-- [ ] T077 [US5] Create article API functions in frontend/src/lib/api/admin.ts (getArticles, createArticle, updateArticle, deleteArticle, getArticleCategories, uploadArticleImage)
-- [ ] T078 [US5] Create article list page in frontend/src/app/admin/articles/page.tsx
-- [ ] T079 [US5] Create article table component in frontend/src/components/admin/ArticleTable.tsx
-- [ ] T080 [US5] Create article form component in frontend/src/components/admin/ArticleForm.tsx
-- [ ] T081 [US5] Create article create page in frontend/src/app/admin/articles/new/page.tsx
-- [ ] T082 [US5] Create article edit page in frontend/src/app/admin/articles/[id]/page.tsx
-- [ ] T083 [US5] Add article status toggle in frontend/src/components/admin/ArticleForm.tsx
-- [ ] T084 [US5] Create article category management in frontend/src/components/admin/ArticleCategoryManager.tsx
-- [ ] T085 [US5] Add conflict detection for article updates in backend/api/views/admin.py
-- [ ] T086 [US5] Integrate conflict detection in frontend/src/components/admin/ArticleForm.tsx
+- [x] T071 [P] [US5] Create article list viewset in backend/api/views/admin.py (ArticleAdminViewSet)
+- [x] T072 [P] [US5] Create article admin serializer in backend/api/serializers/admin.py (ArticleAdminSerializer, ArticleAdminCreateSerializer, ArticleAdminUpdateSerializer)
+- [x] T073 [US5] Add article endpoints to backend/api/urls/admin.py (list, create, retrieve, update, delete)
+- [x] T074 [US5] Add article category endpoints in backend/api/views/admin.py (ArticleCategoryAdminViewSet)
+- [x] T075 [US5] Add article image upload endpoint in backend/api/views/admin.py (ArticleImageUploadView)
+- [x] T076 [US5] Add auto-set published_at on status change in backend/api/views/admin.py
+- [x] T077 [US5] Create article API functions in frontend/src/lib/api/admin.ts (getArticles, createArticle, updateArticle, deleteArticle, getArticleCategories, uploadArticleImage)
+- [x] T078 [US5] Create article list page in frontend/src/app/admin/articles/page.tsx
+- [x] T079 [US5] Create article table component in frontend/src/components/admin/ArticleTable.tsx
+- [x] T080 [US5] Create article form component in frontend/src/components/admin/ArticleForm.tsx
+- [x] T081 [US5] Create article create page in frontend/src/app/admin/articles/new/page.tsx
+- [x] T082 [US5] Create article edit page in frontend/src/app/admin/articles/[id]/page.tsx
+- [x] T083 [US5] Add article status toggle in frontend/src/components/admin/ArticleForm.tsx
+- [x] T084 [US5] Create article category management in frontend/src/components/admin/ArticleCategoryManager.tsx
+- [x] T085 [US5] Add conflict detection for article updates in backend/api/views/admin.py
+- [x] T086 [US5] Integrate conflict detection in frontend/src/components/admin/ArticleForm.tsx
 
 **Checkpoint**: At this point, User Stories 1, 2, 3, 4, AND 5 should all work independently
 
@@ -196,18 +196,18 @@
 
 ### Implementation for User Story 6
 
-- [ ] T087 [US6] Add user detail endpoint in backend/api/views/admin.py (UserAdminViewSet.retrieve)
-- [ ] T088 [US6] Add user update endpoint in backend/api/views/admin.py (UserAdminViewSet.update, partial_update)
-- [ ] T089 [US6] Add user delete endpoint in backend/api/views/admin.py (UserAdminViewSet.destroy)
-- [ ] T090 [US6] Add prevent self-deletion validation in backend/api/views/admin.py
-- [ ] T091 [US6] Add user profile serializer in backend/api/serializers/admin.py (UserProfileAdminSerializer)
-- [ ] T092 [US6] Add user profile endpoints in backend/api/views/admin.py (UserProfileAdminViewSet)
-- [ ] T093 [US6] Create user detail API functions in frontend/src/lib/api/admin.ts (getUser, updateUser, deleteUser, getUserProfile)
-- [ ] T094 [US6] Update user detail/edit page in frontend/src/app/admin/users/[id]/page.tsx
-- [ ] T095 [US6] Create user profile view component in frontend/src/components/admin/UserProfileView.tsx
-- [ ] T096 [US6] Update user form to handle updates in frontend/src/components/admin/UserForm.tsx
-- [ ] T097 [US6] Add user delete confirmation in frontend/src/components/admin/UserTable.tsx
-- [ ] T098 [US6] Add prevent self-deletion UI validation in frontend/src/components/admin/UserForm.tsx
+- [x] T087 [US6] Add user detail endpoint in backend/api/views/admin.py (UserAdminViewSet.retrieve)
+- [x] T088 [US6] Add user update endpoint in backend/api/views/admin.py (UserAdminViewSet.update, partial_update)
+- [x] T089 [US6] Add user delete endpoint in backend/api/views/admin.py (UserAdminViewSet.destroy)
+- [x] T090 [US6] Add prevent self-deletion validation in backend/api/views/admin.py
+- [x] T091 [US6] Add user profile serializer in backend/api/serializers/admin.py (UserProfileAdminSerializer)
+- [x] T092 [US6] Add user profile endpoints in backend/api/views/admin.py (UserProfileAdminViewSet)
+- [x] T093 [US6] Create user detail API functions in frontend/src/lib/api/admin.ts (getUser, updateUser, deleteUser, getUserProfile)
+- [x] T094 [US6] Update user detail/edit page in frontend/src/app/admin/users/[id]/page.tsx
+- [x] T095 [US6] Create user profile view component in frontend/src/components/admin/UserProfileView.tsx
+- [x] T096 [US6] Update user form to handle updates in frontend/src/components/admin/UserForm.tsx
+- [x] T097 [US6] Add user delete confirmation in frontend/src/components/admin/UserTable.tsx
+- [x] T098 [US6] Add prevent self-deletion UI validation in frontend/src/components/admin/UserForm.tsx
 
 **Checkpoint**: At this point, all user stories should work independently
 
@@ -219,48 +219,48 @@
 
 ### Dashboard Statistics
 
-- [ ] T099 Create dashboard stats endpoint in backend/api/views/admin.py (DashboardStatsView)
-- [ ] T100 Add dashboard stats to backend/api/urls/admin.py
-- [ ] T101 Create dashboard stats API function in frontend/src/lib/api/admin.ts (getDashboardStats)
-- [ ] T102 Update dashboard overview page with statistics in frontend/src/app/admin/page.tsx
-- [ ] T103 Create dashboard stats component in frontend/src/components/admin/DashboardStats.tsx
+- [x] T099 Create dashboard stats endpoint in backend/api/views/admin.py (DashboardStatsView)
+- [x] T100 Add dashboard stats to backend/api/urls/admin.py
+- [x] T101 Create dashboard stats API function in frontend/src/lib/api/admin.ts (getDashboardStats)
+- [x] T102 Update dashboard overview page with statistics in frontend/src/app/admin/page.tsx
+- [x] T103 Create dashboard stats component in frontend/src/components/admin/DashboardStats.tsx
 
 ### Bulk Operations
 
-- [ ] T104 Create bulk operations base viewset mixin in backend/api/views/admin.py (BulkOperationsMixin)
-- [ ] T105 Add bulk operations endpoints to backend/api/urls/admin.py (bulk create, update, delete, status change)
-- [ ] T106 Create bulk operations API functions in frontend/src/lib/api/admin.ts (bulkCreate, bulkUpdate, bulkDelete, bulkStatusChange)
-- [ ] T107 Create bulk actions component in frontend/src/components/admin/BulkActions.tsx
-- [ ] T108 Add bulk selection to all entity tables (UserTable, ProductTable, CategoryTree, OrderTable, ArticleTable)
-- [ ] T109 Add bulk operations confirmation dialog in frontend/src/components/admin/BulkConfirmDialog.tsx
+- [x] T104 Create bulk operations base viewset mixin in backend/api/views/admin.py (BulkOperationsMixin)
+- [x] T105 Add bulk operations endpoints to backend/api/urls/admin.py (bulk create, update, delete, status change)
+- [x] T106 Create bulk operations API functions in frontend/src/lib/api/admin.ts (bulkCreate, bulkUpdate, bulkDelete, bulkStatusChange)
+- [x] T107 Create bulk actions component in frontend/src/components/admin/BulkActions.tsx
+- [x] T108 Add bulk selection to all entity tables (UserTable, ProductTable, CategoryTree, OrderTable, ArticleTable)
+- [x] T109 Add bulk operations confirmation dialog in frontend/src/components/admin/BulkConfirmDialog.tsx
 
 ### Search and Filter
 
-- [ ] T110 Add search functionality to all list viewsets in backend/api/views/admin.py
-- [ ] T111 Add filter backends to all list viewsets in backend/api/views/admin.py (DjangoFilterBackend, SearchFilter)
-- [ ] T112 Create search and filter component in frontend/src/components/admin/SearchFilter.tsx
-- [ ] T113 Integrate search and filter in all list pages
+- [x] T110 Add search functionality to all list viewsets in backend/api/views/admin.py
+- [x] T111 Add filter backends to all list viewsets in backend/api/views/admin.py (DjangoFilterBackend, SearchFilter)
+- [x] T112 Create search and filter component in frontend/src/components/admin/SearchFilter.tsx
+- [x] T113 Integrate search and filter in all list pages
 
 ### Pagination
 
-- [ ] T114 Add pagination to all list viewsets in backend/api/views/admin.py
-- [ ] T115 Create pagination component in frontend/src/components/admin/Pagination.tsx
-- [ ] T116 Integrate pagination in all list tables
+- [x] T114 Add pagination to all list viewsets in backend/api/views/admin.py
+- [x] T115 Create pagination component in frontend/src/components/admin/Pagination.tsx
+- [x] T116 Integrate pagination in all list tables
 
 ### Error Handling
 
-- [ ] T117 Create error message component in frontend/src/components/admin/ErrorMessage.tsx
-- [ ] T118 Add retry functionality to error messages in frontend/src/components/admin/ErrorMessage.tsx
-- [ ] T119 Integrate error handling in all forms and API calls
+- [x] T117 Create error message component in frontend/src/components/admin/ErrorMessage.tsx
+- [x] T118 Add retry functionality to error messages in frontend/src/components/admin/ErrorMessage.tsx
+- [x] T119 Integrate error handling in all forms and API calls
 
 ### Empty States
 
-- [ ] T120 Update empty state component with entity-specific messages in frontend/src/components/admin/EmptyState.tsx
-- [ ] T121 Integrate empty states in all list pages
+- [x] T120 Update empty state component with entity-specific messages in frontend/src/components/admin/EmptyState.tsx
+- [x] T121 Integrate empty states in all list pages
 
 ### Loading Indicators
 
-- [ ] T122 Integrate loading indicators in all async operations (forms, tables, API calls)
+- [x] T122 Integrate loading indicators in all async operations (forms, tables, API calls)
 
 ---
 
@@ -268,8 +268,8 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T123 [P] Add success message notifications in frontend/src/components/admin/SuccessMessage.tsx
-- [ ] T124 [P] Integrate success messages after create, update, delete operations
+- [x] T123 [P] Add success message notifications in frontend/src/components/admin/SuccessMessage.tsx
+- [x] T124 [P] Integrate success messages after create, update, delete operations
 - [ ] T125 [P] Add form data preservation on validation errors in all forms
 - [ ] T126 [P] Add image preview before upload confirmation in all image upload components
 - [ ] T127 [P] Add responsive design improvements for tablet devices

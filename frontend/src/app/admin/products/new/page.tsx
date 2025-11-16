@@ -1,15 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api/admin";
 import ProductForm from "@/components/admin/ProductForm";
+import SuccessMessage from "@/components/admin/SuccessMessage";
+import ErrorMessage from "@/components/admin/ErrorMessage";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function NewProductPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -18,11 +22,17 @@ export default function NewProductPage() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-      if (data?.data?.id) {
-        router.push(`/admin/products/${data.data.id}`);
-      } else {
-        router.push("/admin/products");
-      }
+      setSuccessMessage("Product created successfully!");
+      setTimeout(() => {
+        if (data?.data?.id) {
+          router.push(`/admin/products/${data.data.id}`);
+        } else {
+          router.push("/admin/products");
+        }
+      }, 1500);
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -48,14 +58,22 @@ export default function NewProductPage() {
         </Link>
       </div>
 
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
       {createMutation.isError && (
-        <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-800">
-            {createMutation.error instanceof Error
+        <ErrorMessage
+          message={
+            createMutation.error instanceof Error
               ? createMutation.error.message
-              : "Failed to create product. Please try again."}
-          </p>
-        </div>
+              : "Failed to create product. Please try again."
+          }
+          onRetry={() => createMutation.reset()}
+          onDismiss={() => createMutation.reset()}
+        />
       )}
 
       <ProductForm

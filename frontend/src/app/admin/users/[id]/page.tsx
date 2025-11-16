@@ -1,13 +1,17 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { adminApi, UserFormData } from "@/lib/api/admin";
 import { Button } from "@/components/ui/button";
 import UserForm from "@/components/admin/UserForm";
+import UserProfileView from "@/components/admin/UserProfileView";
+import SuccessMessage from "@/components/admin/SuccessMessage";
+import ErrorMessage from "@/components/admin/ErrorMessage";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function UserDetailPage({
   params,
@@ -18,6 +22,7 @@ export default function UserDetailPage({
   const router = useRouter();
   const queryClient = useQueryClient();
   const userId = resolvedParams.id;
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users", userId],
@@ -34,7 +39,13 @@ export default function UserDetailPage({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users", userId] });
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      router.push("/admin/users");
+      setSuccessMessage("User updated successfully!");
+      setTimeout(() => {
+        router.push("/admin/users");
+      }, 1500);
+    },
+    onError: () => {
+      setSuccessMessage(null);
     },
   });
 
@@ -61,6 +72,31 @@ export default function UserDetailPage({
         </div>
       </div>
 
+      {successMessage && (
+        <SuccessMessage
+          message={successMessage}
+          onDismiss={() => setSuccessMessage(null)}
+        />
+      )}
+
+      {updateMutation.isError && (
+        <ErrorMessage
+          message={
+            updateMutation.error instanceof Error
+              ? updateMutation.error.message
+              : "Failed to update user. Please try again."
+          }
+          onRetry={() => updateMutation.reset()}
+          onDismiss={() => updateMutation.reset()}
+        />
+      )}
+
+      <div className="flex items-center justify-end mb-4">
+        <Link href="/admin/users">
+          <Button variant="outline">Back to Users</Button>
+        </Link>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>User Information</CardTitle>
@@ -74,6 +110,15 @@ export default function UserDetailPage({
             onCancel={() => router.push("/admin/users")}
             isLoading={updateMutation.isPending}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>User Profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UserProfileView userId={userId} />
         </CardContent>
       </Card>
     </div>

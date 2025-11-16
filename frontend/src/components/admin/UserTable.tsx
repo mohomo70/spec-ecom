@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { User } from "@/lib/api/admin";
@@ -9,14 +9,46 @@ interface UserTableProps {
   users: User[];
   onDelete?: (id: string) => void;
   currentUserId?: string;
+  onSelectionChange?: (selectedIds: string[]) => void;
+  selectedIds?: string[];
 }
 
 export default function UserTable({
   users,
   onDelete,
   currentUserId,
+  onSelectionChange,
+  selectedIds = [],
 }: UserTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds);
+
+  useEffect(() => {
+    setLocalSelectedIds(selectedIds);
+  }, [selectedIds]);
+
+  useEffect(() => {
+    const handleClearSelection = () => {
+      setLocalSelectedIds([]);
+      onSelectionChange?.([]);
+    };
+    window.addEventListener("clearBulkSelection", handleClearSelection);
+    return () => window.removeEventListener("clearBulkSelection", handleClearSelection);
+  }, [onSelectionChange]);
+
+  const handleSelectAll = (checked: boolean) => {
+    const newSelection = checked ? users.map((u) => u.id) : [];
+    setLocalSelectedIds(newSelection);
+    onSelectionChange?.(newSelection);
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSelection = checked
+      ? [...localSelectedIds, id]
+      : localSelectedIds.filter((selectedId) => selectedId !== id);
+    setLocalSelectedIds(newSelection);
+    onSelectionChange?.(newSelection);
+  };
 
   const handleDelete = async (id: string) => {
     if (id === currentUserId) {
@@ -63,7 +95,17 @@ export default function UserTable({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {users.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.id} className={localSelectedIds.includes(user.id) ? "bg-blue-50" : ""}>
+              {onSelectionChange && (
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={localSelectedIds.includes(user.id)}
+                    onChange={(e) => handleSelectOne(user.id, e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </td>
+              )}
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 {user.email}
               </td>

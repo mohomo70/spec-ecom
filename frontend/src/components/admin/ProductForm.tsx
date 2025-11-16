@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ProductDetail, Category } from "@/lib/api/admin";
 import { apiClient } from "@/lib/api";
+import ConflictWarning from "@/components/admin/ConflictWarning";
 
 const productSchema = z.object({
   species_name: z.string().min(1, "Species name is required"),
@@ -55,6 +56,7 @@ interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
+  productId?: string;
 }
 
 export default function ProductForm({
@@ -62,7 +64,11 @@ export default function ProductForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  productId,
 }: ProductFormProps) {
+  const queryClient = useQueryClient();
+  const [conflictError, setConflictError] = useState<any>(null);
+  
   const { data: categoriesData } = useQuery({
     queryKey: ["categories"],
     queryFn: () => apiClient.getCategories(),
@@ -76,6 +82,7 @@ export default function ProductForm({
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: product
@@ -119,8 +126,80 @@ export default function ProductForm({
     }
   };
 
+  const handleFormSubmit = async (data: ProductFormData) => {
+    setConflictError(null);
+    try {
+      if (product && product.updated_at) {
+        (data as any).updated_at = product.updated_at;
+      }
+      await onSubmit(data);
+    } catch (error: any) {
+      if (error?.conflict || error?.response?.data?.conflict) {
+        setConflictError(error.response?.data || error);
+      } else {
+        throw error;
+      }
+    }
+  };
+
+  const handleRetry = async () => {
+    if (productId) {
+      await queryClient.invalidateQueries({ queryKey: ["admin", "products", productId] });
+      const { data } = await queryClient.fetchQuery({
+        queryKey: ["admin", "products", productId],
+        queryFn: async () => {
+          const { adminApi } = await import("@/lib/api/admin");
+          const response = await adminApi.getProduct(productId);
+          return response.data;
+        },
+      });
+      if (data) {
+        reset({
+          species_name: data.species_name,
+          scientific_name: data.scientific_name || "",
+          description: data.description,
+          price: parseFloat(data.price),
+          stock_quantity: data.stock_quantity,
+          is_available: data.is_available,
+          difficulty_level: data.difficulty_level,
+          min_tank_size_gallons: data.min_tank_size_gallons,
+          ph_range_min: data.ph_range_min || null,
+          ph_range_max: data.ph_range_max || null,
+          temperature_range_min: data.temperature_range_min || null,
+          temperature_range_max: data.temperature_range_max || null,
+          max_size_inches: data.max_size_inches || null,
+          lifespan_years: data.lifespan_years || null,
+          diet_type: data.diet_type || null,
+          compatibility_notes: data.compatibility_notes || "",
+          care_instructions: data.care_instructions,
+          seo_title: data.seo_title || "",
+          seo_description: data.seo_description || "",
+          category_ids: data.categories?.map((c: any) => c.id) || [],
+        });
+        setConflictError(null);
+      }
+    }
+  };
+
+  const handleForceUpdate = async () => {
+    setConflictError(null);
+    const formData = watch();
+    if (product) {
+      (formData as any).updated_at = null;
+    }
+    await onSubmit(formData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {conflictError && (
+        <ConflictWarning
+          message={conflictError.message || "This record has been modified by another user."}
+          currentUpdatedAt={conflictError.current_updated_at}
+          onRetry={handleRetry}
+          onForceUpdate={handleForceUpdate}
+        />
+      )}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">
