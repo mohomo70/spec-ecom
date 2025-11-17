@@ -6,9 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ProductDetail, Category } from "@/lib/api/admin";
+import { adminApi, ProductDetail, Category, PlantCategory } from "@/lib/api/admin";
 import { apiClient } from "@/lib/api";
 import ConflictWarning from "@/components/admin/ConflictWarning";
+import Link from "next/link";
 
 const productSchema = z.object({
   species_name: z.string().min(1, "Species name is required"),
@@ -17,6 +18,8 @@ const productSchema = z.object({
   price: z.number().min(0.01, "Price must be greater than 0"),
   stock_quantity: z.number().int().min(0, "Stock quantity must be 0 or greater"),
   is_available: z.boolean().default(true),
+  hero_eligible: z.boolean().default(false),
+  product_type: z.enum(["fish", "plant", "accessory"]).default("fish"),
   difficulty_level: z.enum(["beginner", "intermediate", "advanced"]),
   min_tank_size_gallons: z.number().int().min(1, "Minimum tank size is required"),
   ph_range_min: z.number().min(0).max(14).optional().nullable(),
@@ -31,6 +34,17 @@ const productSchema = z.object({
   seo_title: z.string().max(60).optional(),
   seo_description: z.string().max(160).optional(),
   category_ids: z.array(z.string()).optional(),
+  botanical_name: z.string().optional(),
+  plant_category_id: z.string().uuid().optional().nullable(),
+  plant_light_requirements: z.string().optional(),
+  plant_growth_rate: z.enum(["slow", "medium", "fast"]).optional().nullable(),
+  plant_substrate_preference: z.string().optional(),
+  plant_co2_requirement: z.enum(["none", "optional", "recommended"]).optional().nullable(),
+  plant_difficulty: z.string().optional(),
+  plant_care_notes: z.string().optional(),
+  plant_max_height_cm: z.number().int().optional().nullable(),
+  plant_spread_cm: z.number().int().optional().nullable(),
+  plant_compatible_fauna_text: z.string().optional(),
 }).refine((data) => {
   if (data.ph_range_min !== null && data.ph_range_max !== null) {
     return data.ph_range_min <= data.ph_range_max;
@@ -47,6 +61,23 @@ const productSchema = z.object({
 }, {
   message: "Temperature range min must be less than or equal to max",
   path: ["temperature_range_max"],
+}).superRefine((data, ctx) => {
+  if (data.product_type === "plant") {
+    if (!data.botanical_name || !data.botanical_name.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Botanical name is required for plant products",
+        path: ["botanical_name"],
+      });
+    }
+    if (!data.plant_category_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select a plant category",
+        path: ["plant_category_id"],
+      });
+    }
+  }
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -76,6 +107,19 @@ export default function ProductForm({
 
   const categories = (categoriesData as any)?.results || [];
 
+  const { data: plantCategoriesResponse } = useQuery({
+    queryKey: ["admin", "plant-categories"],
+    queryFn: () => adminApi.getPlantCategories({ is_active: true }),
+  });
+
+  const plantCategories: PlantCategory[] =
+    (plantCategoriesResponse?.results ||
+      (plantCategoriesResponse?.data
+        ? Array.isArray(plantCategoriesResponse.data)
+          ? plantCategoriesResponse.data
+          : [plantCategoriesResponse.data]
+        : [])) as PlantCategory[];
+
   const {
     register,
     handleSubmit,
@@ -93,6 +137,8 @@ export default function ProductForm({
           price: parseFloat(product.price),
           stock_quantity: product.stock_quantity,
           is_available: product.is_available,
+          hero_eligible: product.hero_eligible ?? false,
+          product_type: product.product_type || "fish",
           difficulty_level: product.difficulty_level,
           min_tank_size_gallons: product.min_tank_size_gallons,
           ph_range_min: product.ph_range_min || null,
@@ -107,15 +153,39 @@ export default function ProductForm({
           seo_title: product.seo_title || "",
           seo_description: product.seo_description || "",
           category_ids: product.categories?.map((c) => c.id) || [],
+          botanical_name: product.botanical_name || "",
+          plant_category_id: product.plant_category?.id || null,
+          plant_light_requirements: product.plant_light_requirements || "",
+          plant_growth_rate: product.plant_growth_rate || null,
+          plant_substrate_preference: product.plant_substrate_preference || "",
+          plant_co2_requirement: product.plant_co2_requirement || null,
+          plant_difficulty: product.plant_difficulty || "",
+          plant_care_notes: product.plant_care_notes || "",
+          plant_max_height_cm: product.plant_max_height_cm ?? null,
+          plant_spread_cm: product.plant_spread_cm ?? null,
+          plant_compatible_fauna_text: product.plant_compatible_fauna?.join("\n") || "",
         }
       : {
           is_available: true,
+          hero_eligible: false,
+          product_type: "fish",
           difficulty_level: "beginner",
           category_ids: [],
+          plant_light_requirements: "",
+          plant_growth_rate: null,
+          plant_substrate_preference: "",
+          plant_co2_requirement: null,
+          plant_difficulty: "",
+          plant_care_notes: "",
+          plant_max_height_cm: null,
+          plant_spread_cm: null,
+          plant_compatible_fauna_text: "",
         },
   });
 
   const selectedCategories = watch("category_ids") || [];
+  const productType = watch("product_type");
+  const isPlant = productType === "plant";
 
   const toggleCategory = (categoryId: string) => {
     const current = selectedCategories;
@@ -129,10 +199,23 @@ export default function ProductForm({
   const handleFormSubmit = async (data: ProductFormData) => {
     setConflictError(null);
     try {
+      const payload: any = { ...data };
       if (product && product.updated_at) {
-        (data as any).updated_at = product.updated_at;
+        payload.updated_at = product.updated_at;
       }
-      await onSubmit(data);
+      if (payload.plant_compatible_fauna_text !== undefined) {
+        payload.plant_compatible_fauna = payload.plant_compatible_fauna_text
+          ? payload.plant_compatible_fauna_text
+              .split(/[\n,]/)
+              .map((entry: string) => entry.trim())
+              .filter(Boolean)
+          : [];
+        delete payload.plant_compatible_fauna_text;
+      }
+      if (!payload.plant_category_id) {
+        payload.plant_category_id = null;
+      }
+      await onSubmit(payload);
     } catch (error: any) {
       if (error?.conflict || error?.response?.data?.conflict) {
         setConflictError(error.response?.data || error);
@@ -148,7 +231,6 @@ export default function ProductForm({
       const { data } = await queryClient.fetchQuery({
         queryKey: ["admin", "products", productId],
         queryFn: async () => {
-          const { adminApi } = await import("@/lib/api/admin");
           const response = await adminApi.getProduct(productId);
           return response.data;
         },
@@ -161,6 +243,8 @@ export default function ProductForm({
           price: parseFloat(data.price),
           stock_quantity: data.stock_quantity,
           is_available: data.is_available,
+          hero_eligible: data.hero_eligible ?? false,
+          product_type: data.product_type || "fish",
           difficulty_level: data.difficulty_level,
           min_tank_size_gallons: data.min_tank_size_gallons,
           ph_range_min: data.ph_range_min || null,
@@ -175,6 +259,17 @@ export default function ProductForm({
           seo_title: data.seo_title || "",
           seo_description: data.seo_description || "",
           category_ids: data.categories?.map((c: any) => c.id) || [],
+          botanical_name: data.botanical_name || "",
+          plant_category_id: data.plant_category?.id || null,
+          plant_light_requirements: data.plant_light_requirements || "",
+          plant_growth_rate: data.plant_growth_rate || null,
+          plant_substrate_preference: data.plant_substrate_preference || "",
+          plant_co2_requirement: data.plant_co2_requirement || null,
+          plant_difficulty: data.plant_difficulty || "",
+          plant_care_notes: data.plant_care_notes || "",
+          plant_max_height_cm: data.plant_max_height_cm ?? null,
+          plant_spread_cm: data.plant_spread_cm ?? null,
+          plant_compatible_fauna_text: data.plant_compatible_fauna?.join("\n") || "",
         });
         setConflictError(null);
       }
@@ -187,7 +282,7 @@ export default function ProductForm({
     if (product) {
       (formData as any).updated_at = null;
     }
-    await onSubmit(formData);
+    await handleFormSubmit(formData as ProductFormData);
   };
 
   return (
@@ -224,6 +319,20 @@ export default function ProductForm({
             {...register("scientific_name")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Product Type *
+          </label>
+          <select
+            {...register("product_type")}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="fish">Fish</option>
+            <option value="plant">Plant</option>
+            <option value="accessory">Accessory</option>
+          </select>
         </div>
 
         <div className="sm:col-span-2">
@@ -465,7 +574,181 @@ export default function ProductForm({
             <span className="ml-2 text-sm text-gray-700">Available for purchase</span>
           </label>
         </div>
+
+        <div>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              {...register("hero_eligible")}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">Eligible for homepage hero / quick-link promotion</span>
+          </label>
+        </div>
       </div>
+
+      {isPlant && (
+        <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Plant Attributes</h3>
+              <p className="text-sm text-gray-600">
+                Provide horticultural data used on plant detail pages.
+              </p>
+            </div>
+            <Link href="/admin/plant-categories" className="text-sm text-blue-600 hover:underline">
+              Manage plant categories
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Botanical Name *
+              </label>
+              <input
+                type="text"
+                {...register("botanical_name")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+              {errors.botanical_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.botanical_name.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Plant Category *
+              </label>
+              <select
+                {...register("plant_category_id")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select a plant category</option>
+                {plantCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {errors.plant_category_id && (
+                <p className="mt-1 text-sm text-red-600">{errors.plant_category_id.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Light Requirements
+              </label>
+              <input
+                type="text"
+                {...register("plant_light_requirements")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="e.g., Low, Medium, High"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Growth Rate
+              </label>
+              <select
+                {...register("plant_growth_rate")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select growth rate</option>
+                <option value="slow">Slow</option>
+                <option value="medium">Medium</option>
+                <option value="fast">Fast</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Substrate Preference
+              </label>
+              <input
+                type="text"
+                {...register("plant_substrate_preference")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="e.g., Sand, Aquasoil"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                CO₂ Requirement
+              </label>
+              <select
+                {...register("plant_co2_requirement")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="">Select requirement</option>
+                <option value="none">None</option>
+                <option value="optional">Optional</option>
+                <option value="recommended">Recommended</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Care Difficulty
+              </label>
+              <input
+                type="text"
+                {...register("plant_difficulty")}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="e.g., Easy, Moderate"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Max Height (cm)
+              </label>
+              <input
+                type="number"
+                {...register("plant_max_height_cm", { valueAsNumber: true })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Spread (cm)
+              </label>
+              <input
+                type="number"
+                {...register("plant_spread_cm", { valueAsNumber: true })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Compatible Fauna
+            </label>
+            <textarea
+              {...register("plant_compatible_fauna_text")}
+              rows={3}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              placeholder="List compatible fish separated by commas or new lines"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Plant Care Notes
+            </label>
+            <textarea
+              {...register("plant_care_notes")}
+              rows={3}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end space-x-4">
         {onCancel && (

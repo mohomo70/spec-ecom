@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.contrib.auth import get_user_model
@@ -15,7 +16,18 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
-from ..models import UserProfile, FishProduct, ProductImage, Category, CategoryImage, Order, Article, ArticleCategory, ArticleImage
+from ..models import (
+    UserProfile,
+    FishProduct,
+    ProductImage,
+    Category,
+    PlantCategory,
+    CategoryImage,
+    Order,
+    Article,
+    ArticleCategory,
+    ArticleImage,
+)
 from ..serializers.admin import (
     UserAdminSerializer,
     UserAdminCreateSerializer,
@@ -32,6 +44,7 @@ from ..serializers.admin import (
     CategoryAdminUpdateSerializer,
     CategoryDetailAdminSerializer,
     CategoryImageAdminSerializer,
+    PlantCategoryAdminSerializer,
     OrderAdminSerializer,
     OrderAdminUpdateSerializer,
     OrderDetailAdminSerializer,
@@ -42,7 +55,7 @@ from ..serializers.admin import (
     ArticleImageAdminSerializer,
     ArticleCategoryAdminSerializer,
     ArticleCategoryAdminCreateSerializer,
-    ArticleCategoryAdminUpdateSerializer
+    ArticleCategoryAdminUpdateSerializer,
 )
 from ..permissions import IsAdminOnly
 
@@ -290,13 +303,13 @@ class UserProfileAdminViewSet(viewsets.ModelViewSet):
 
 class ProductAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for Product management."""
-    
-    queryset = FishProduct.objects.all().prefetch_related('categories', 'product_images')
+
+    queryset = FishProduct.objects.all().select_related('plant_category').prefetch_related('categories', 'product_images')
     permission_classes = [permissions.IsAuthenticated, IsAdminOnly]
     pagination_class = AdminPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_available', 'difficulty_level', 'diet_type']
-    search_fields = ['species_name', 'scientific_name', 'description']
+    filterset_fields = ['is_available', 'difficulty_level', 'diet_type', 'product_type', 'plant_category']
+    search_fields = ['species_name', 'scientific_name', 'description', 'botanical_name']
     ordering_fields = ['species_name', 'price', 'stock_quantity', 'created_at']
     ordering = ['-created_at']
 
@@ -314,6 +327,9 @@ class ProductAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
         category_id = self.request.query_params.get('category')
         if category_id:
             queryset = queryset.filter(categories__id=category_id)
+        plant_category = self.request.query_params.get('plant_category')
+        if plant_category:
+            queryset = queryset.filter(plant_category__id=plant_category)
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
         if min_price:
@@ -564,6 +580,53 @@ class CategoryAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
         
         image.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PlantCategoryAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
+    """Admin viewset for plant category management."""
+
+    queryset = PlantCategory.objects.all().prefetch_related('products')
+    permission_classes = [permissions.IsAuthenticated, IsAdminOnly]
+    pagination_class = AdminPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['is_active']
+    search_fields = ['name', 'slug', 'description']
+    ordering_fields = ['display_order', 'name', 'created_at']
+    ordering = ['display_order', 'name']
+    serializer_class = PlantCategoryAdminSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        category_name = response.data.get('name')
+        logger.info(
+            f"Plant category created via admin dashboard: {category_name} by {request.user.email}",
+            extra={'admin_id': str(request.user.id)}
+        )
+        return response
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        category_name = response.data.get('name')
+        logger.info(
+            f"Plant category updated via admin dashboard: {category_name} by {request.user.email}",
+            extra={'admin_id': str(request.user.id)}
+        )
+        return response
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        product_count = instance.products.count()
+        if product_count > 0:
+            raise ValidationError({
+                'error': 'category_has_products',
+                'message': f"Cannot delete category with {product_count} assigned plant product(s). Reassign or archive products first."
+            })
+        response = super().destroy(request, *args, **kwargs)
+        logger.info(
+            f"Plant category deleted via admin dashboard: {instance.name} by {request.user.email}",
+            extra={'admin_id': str(request.user.id)}
+        )
+        return response
 
 
 class OrderAdminViewSet(viewsets.ReadOnlyModelViewSet):

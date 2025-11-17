@@ -1,4 +1,52 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+export const PLANTS_ENABLED =
+  (process.env.NEXT_PUBLIC_PLANTS_ENABLED ?? 'false').toLowerCase() === 'true';
+
+export type CatalogProductType = 'fish' | 'plant' | 'accessory';
+
+export interface CatalogPlantCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface CatalogProduct {
+  id: string;
+  species_name: string;
+  scientific_name?: string;
+  description: string;
+  price: number;
+  stock_quantity: number;
+  is_available: boolean;
+  difficulty_level: 'beginner' | 'intermediate' | 'advanced';
+  product_type: CatalogProductType;
+  hero_eligible: boolean;
+  min_tank_size_gallons: number;
+  categories?: Array<{ id: string; name: string; slug: string }>;
+  primary_image_url?: string;
+  images?: Array<{
+    id: string;
+    url: string;
+    is_primary: boolean;
+    display_order: number;
+    alt_text?: string;
+    caption?: string;
+  }>;
+  plant_category?: CatalogPlantCategory | null;
+  botanical_name?: string;
+  plant_light_requirements?: string;
+  plant_growth_rate?: 'slow' | 'medium' | 'fast';
+  plant_substrate_preference?: string;
+  plant_co2_requirement?: 'none' | 'optional' | 'recommended';
+  plant_difficulty?: string;
+  plant_compatible_fauna?: string[];
+  plant_care_notes?: string;
+  plant_max_height_cm?: number | null;
+  plant_spread_cm?: number | null;
+  seo_title?: string;
+  seo_description?: string;
+  additional_images?: string[];
+}
 
 class ApiClient {
   private baseURL: string;
@@ -55,8 +103,16 @@ class ApiClient {
   }
 
   // Products
-  async getProducts(params?: Record<string, string>) {
-    const queryString = params ? `?${new URLSearchParams(params)}` : '';
+  async getProducts(params?: Record<string, string | number | boolean>) {
+    const query = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          query.append(key, String(value));
+        }
+      });
+    }
+    const queryString = query.toString() ? `?${query.toString()}` : '';
     return this.request(`/products${queryString}`);
   }
 

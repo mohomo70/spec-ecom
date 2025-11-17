@@ -5,8 +5,22 @@ Serializers for freshwater fish ecommerce platform.
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils.html import strip_tags
+from django.conf import settings
 import bleach
-from ..models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
+from ..models import (
+    UserProfile,
+    Category,
+    PlantCategory,
+    FishProduct,
+    ShippingAddress,
+    Order,
+    OrderItem,
+    ArticleCategory,
+    Article,
+    ProductImage,
+    CategoryImage,
+    ArticleImage,
+)
 
 User = get_user_model()
 
@@ -94,22 +108,66 @@ class CategorySerializer(serializers.ModelSerializer, ImageURLMixin):
         return None
 
 
+class PlantCategorySerializer(serializers.ModelSerializer):
+    """Serializer for PlantCategory model."""
+
+    class Meta:
+        model = PlantCategory
+        fields = ['id', 'name', 'slug', 'description', 'display_order', 'is_active']
+        read_only_fields = ['id']
+
+
 class FishProductSerializer(serializers.ModelSerializer, ImageURLMixin):
     """Serializer for FishProduct model."""
 
     categories = CategorySerializer(many=True, read_only=True)
+    plant_category = PlantCategorySerializer(read_only=True)
     primary_image_url = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
 
     class Meta:
         model = FishProduct
         fields = [
-            'id', 'species_name', 'scientific_name', 'description', 'price', 'stock_quantity',
-            'is_available', 'difficulty_level', 'min_tank_size_gallons', 'ph_range_min',
-            'ph_range_max', 'temperature_range_min', 'temperature_range_max', 'max_size_inches',
-            'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions',
-            'image_url', 'primary_image_url', 'images', 'additional_images', 'seo_title', 'seo_description', 'categories',
-            'created_at', 'updated_at'
+            'id',
+            'species_name',
+            'scientific_name',
+            'description',
+            'price',
+            'stock_quantity',
+            'is_available',
+            'difficulty_level',
+            'product_type',
+            'hero_eligible',
+            'min_tank_size_gallons',
+            'ph_range_min',
+            'ph_range_max',
+            'temperature_range_min',
+            'temperature_range_max',
+            'max_size_inches',
+            'lifespan_years',
+            'diet_type',
+            'compatibility_notes',
+            'care_instructions',
+            'image_url',
+            'primary_image_url',
+            'images',
+            'additional_images',
+            'seo_title',
+            'seo_description',
+            'categories',
+            'plant_category',
+            'botanical_name',
+            'plant_light_requirements',
+            'plant_growth_rate',
+            'plant_substrate_preference',
+            'plant_co2_requirement',
+            'plant_difficulty',
+            'plant_compatible_fauna',
+            'plant_care_notes',
+            'plant_max_height_cm',
+            'plant_spread_cm',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
@@ -242,6 +300,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 quantity = int(item_data['quantity'])
 
                 product = FishProduct.objects.get(id=product_id, is_available=True)
+                if product.product_type == 'plant' and not getattr(settings, 'PLANTS_ENABLED', False):
+                    raise serializers.ValidationError(f"Plant products are not currently available for purchase: {product.species_name}")
                 if product.stock_quantity < quantity:
                     raise serializers.ValidationError(f"Insufficient stock for {product.species_name}")
 
@@ -278,6 +338,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 product_snapshot={
                     'species_name': product.species_name,
                     'scientific_name': product.scientific_name,
+                    'product_type': product.product_type,
+                    'botanical_name': product.botanical_name,
+                    'plant_category': product.plant_category.name if product.plant_category else None,
                     'price': str(product.price),
                     'image_url': product.image_url,
                 }

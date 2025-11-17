@@ -169,3 +169,12 @@ CORS_ALLOW_CREDENTIALS = True
 
  # Custom User Model
 AUTH_USER_MODEL = 'api.User'
+
+# Product type + feature flags
+RAW_PRODUCT_TYPES = config('PRODUCT_TYPES', default='fish')
+PRODUCT_TYPES = tuple(
+    entry.strip()
+    for entry in RAW_PRODUCT_TYPES.split(',')
+    if entry.strip()
+) or ('fish',)
+PLANTS_ENABLED = config('PLANTS_ENABLED', default=False, cast=bool)

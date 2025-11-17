@@ -1,0 +1,17 @@
+node_modules/
+.next/
+dist/
+build/
+coverage/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+.turbo/
+*.log
+.env
+.env.*
+generated/
+**/__generated__/
+out/
+!.eslintrc.cjs
+

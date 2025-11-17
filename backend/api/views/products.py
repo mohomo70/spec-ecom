@@ -6,12 +6,13 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from django.core.cache import cache
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.db import transaction, DatabaseError, OperationalError
 import os
-from ..models import FishProduct, ProductImage
-from ..serializers import FishProductSerializer, ProductImageSerializer
+from ..models import FishProduct, PlantCategory, ProductImage
+from ..serializers import FishProductSerializer, PlantCategorySerializer, ProductImageSerializer
 from ..validators import validate_image_file
 from ..permissions import IsAdminOnly
 
@@ -21,9 +22,10 @@ class ProductListView(generics.ListAPIView):
 
     serializer_class = FishProductSerializer
     permission_classes = [AllowAny]
+    cache_timeout = 60
 
     def get_queryset(self):
-        queryset = FishProduct.objects.filter(is_available=True).prefetch_related('categories')
+        queryset = FishProduct.objects.filter(is_available=True).select_related('plant_category').prefetch_related('categories')
 
         # Enhanced search functionality
         search = self.request.query_params.get('search', '')
@@ -36,10 +38,22 @@ class ProductListView(generics.ListAPIView):
                 Q(compatibility_notes__icontains=search)
             )
 
-        # Category filter
+        # Product type filter
+        product_type = self.request.query_params.get('product_type')
+        if product_type:
+            queryset = queryset.filter(product_type=product_type)
+
+        # Category filter (supports fish + plant categories)
         category = self.request.query_params.get('category', '')
         if category:
-            queryset = queryset.filter(categories__slug=category)
+            queryset = queryset.filter(
+                Q(categories__slug=category) |
+                Q(plant_category__slug=category)
+            )
+
+        plant_category = self.request.query_params.get('plant_category')
+        if plant_category:
+            queryset = queryset.filter(plant_category__slug=plant_category)
 
         # Difficulty filter
         difficulty = self.request.query_params.get('difficulty', '')
@@ -87,13 +101,33 @@ class ProductListView(generics.ListAPIView):
 
         return queryset.order_by('species_name')
 
+    def list(self, request, *args, **kwargs):
+        cache_key = f"catalog:list:{request.get_full_path()}"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
+
 
 class ProductDetailView(generics.RetrieveAPIView):
     """Retrieve a single product."""
 
     serializer_class = FishProductSerializer
     permission_classes = [AllowAny]
-    queryset = FishProduct.objects.filter(is_available=True).prefetch_related('categories')
+    queryset = FishProduct.objects.filter(is_available=True).select_related('plant_category').prefetch_related('categories')
+    cache_timeout = 60
+
+    def retrieve(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        cache_key = f"catalog:detail:{pk}"
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(cached)
+        response = super().retrieve(request, *args, **kwargs)
+        cache.set(cache_key, response.data, self.cache_timeout)
+        return response
 
 
 class ProductImageUploadView(APIView):
@@ -402,3 +436,11 @@ class ProductImageUploadView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class PlantCategoryListView(generics.ListAPIView):
+    """Public list of active plant categories for catalog filters."""
+
+    serializer_class = PlantCategorySerializer
+    permission_classes = [AllowAny]
+    queryset = PlantCategory.objects.filter(is_active=True).order_by('display_order', 'name')

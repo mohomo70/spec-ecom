@@ -4,7 +4,19 @@ Admin dashboard serializers.
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from ..models import UserProfile, FishProduct, Category, ProductImage, CategoryImage, Order, OrderItem, Article, ArticleCategory, ArticleImage
+from ..models import (
+    UserProfile,
+    FishProduct,
+    Category,
+    PlantCategory,
+    ProductImage,
+    CategoryImage,
+    Order,
+    OrderItem,
+    Article,
+    ArticleCategory,
+    ArticleImage,
+)
 
 User = get_user_model()
 
@@ -141,18 +153,63 @@ class ProductImageAdminSerializer(serializers.ModelSerializer, ImageURLMixin):
         return None
 
 
+class PlantCategorySummarySerializer(serializers.ModelSerializer):
+    """Lightweight serializer for plant categories."""
+
+    class Meta:
+        model = PlantCategory
+        fields = ['id', 'name', 'slug']
+
+
+class PlantCategoryAdminSerializer(serializers.ModelSerializer):
+    """Admin serializer for full CRUD of plant categories."""
+
+    products_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlantCategory
+        fields = [
+            'id',
+            'name',
+            'slug',
+            'description',
+            'display_order',
+            'is_active',
+            'created_at',
+            'updated_at',
+            'products_count',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'products_count']
+
+    def get_products_count(self, obj):
+        return obj.products.count()
+
+
 class ProductAdminSerializer(serializers.ModelSerializer):
     """Admin serializer for FishProduct - list view."""
     
     primary_image_url = serializers.SerializerMethodField()
     category_names = serializers.SerializerMethodField()
+    plant_category = PlantCategorySummarySerializer(read_only=True)
 
     class Meta:
         model = FishProduct
         fields = [
-            'id', 'species_name', 'scientific_name', 'price', 'stock_quantity',
-            'is_available', 'difficulty_level', 'primary_image_url', 'category_names',
-            'created_at', 'updated_at'
+            'id',
+            'species_name',
+            'scientific_name',
+            'price',
+            'stock_quantity',
+            'is_available',
+            'difficulty_level',
+            'product_type',
+            'hero_eligible',
+            'primary_image_url',
+            'category_names',
+            'plant_category',
+            'botanical_name',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -178,16 +235,59 @@ class ProductAdminCreateSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty=True
     )
+    plant_category_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    plant_compatible_fauna = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
 
     class Meta:
         model = FishProduct
         fields = [
-            'species_name', 'scientific_name', 'description', 'price', 'stock_quantity',
-            'is_available', 'difficulty_level', 'min_tank_size_gallons', 'ph_range_min',
-            'ph_range_max', 'temperature_range_min', 'temperature_range_max', 'max_size_inches',
-            'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions',
-            'seo_title', 'seo_description', 'category_ids'
+            'species_name',
+            'scientific_name',
+            'description',
+            'price',
+            'stock_quantity',
+            'is_available',
+            'difficulty_level',
+            'min_tank_size_gallons',
+            'ph_range_min',
+            'ph_range_max',
+            'temperature_range_min',
+            'temperature_range_max',
+            'max_size_inches',
+            'lifespan_years',
+            'diet_type',
+            'compatibility_notes',
+            'care_instructions',
+            'seo_title',
+            'seo_description',
+            'category_ids',
+            'product_type',
+            'hero_eligible',
+            'plant_category_id',
+            'botanical_name',
+            'plant_light_requirements',
+            'plant_growth_rate',
+            'plant_substrate_preference',
+            'plant_co2_requirement',
+            'plant_difficulty',
+            'plant_compatible_fauna',
+            'plant_care_notes',
+            'plant_max_height_cm',
+            'plant_spread_cm',
         ]
+        extra_kwargs = {
+            'botanical_name': {'required': False, 'allow_blank': True},
+            'plant_light_requirements': {'required': False, 'allow_blank': True},
+            'plant_growth_rate': {'required': False, 'allow_blank': True},
+            'plant_substrate_preference': {'required': False, 'allow_blank': True},
+            'plant_co2_requirement': {'required': False, 'allow_blank': True},
+            'plant_difficulty': {'required': False, 'allow_blank': True},
+            'plant_care_notes': {'required': False, 'allow_blank': True},
+        }
 
     def validate(self, attrs):
         ph_min = attrs.get('ph_range_min')
@@ -204,14 +304,43 @@ class ProductAdminCreateSerializer(serializers.ModelSerializer):
                 "temperature_range": "temperature_range_min must be less than or equal to temperature_range_max"
             })
         
+        product_type = attrs.get('product_type', 'fish')
+        plant_category_id = self.initial_data.get('plant_category_id')
+        botanical_name = attrs.get('botanical_name') or self.initial_data.get('botanical_name')
+
+        if product_type == 'plant':
+            errors = {}
+            if not botanical_name:
+                errors['botanical_name'] = "Botanical name is required for plant products."
+            if not plant_category_id:
+                errors['plant_category_id'] = "Plant products require a plant_category_id."
+            if errors:
+                raise serializers.ValidationError(errors)
+
         return attrs
 
     def create(self, validated_data):
         category_ids = validated_data.pop('category_ids', [])
+        plant_category_id = self.initial_data.get('plant_category_id')
+        compatible_fauna = validated_data.pop('plant_compatible_fauna', None)
+
         product = FishProduct.objects.create(**validated_data)
+
         if category_ids:
             categories = Category.objects.filter(id__in=category_ids)
             product.categories.set(categories)
+
+        if plant_category_id:
+            try:
+                plant_category = PlantCategory.objects.get(id=plant_category_id)
+                product.plant_category = plant_category
+            except PlantCategory.DoesNotExist:
+                raise serializers.ValidationError({"plant_category_id": "Invalid plant category."})
+
+        if compatible_fauna is not None:
+            product.plant_compatible_fauna = compatible_fauna
+
+        product.save()
         return product
 
 
@@ -224,16 +353,60 @@ class ProductAdminUpdateSerializer(serializers.ModelSerializer):
         required=False
     )
     updated_at = serializers.DateTimeField(required=False, allow_null=True)
+    plant_category_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    plant_compatible_fauna = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
 
     class Meta:
         model = FishProduct
         fields = [
-            'species_name', 'scientific_name', 'description', 'price', 'stock_quantity',
-            'is_available', 'difficulty_level', 'min_tank_size_gallons', 'ph_range_min',
-            'ph_range_max', 'temperature_range_min', 'temperature_range_max', 'max_size_inches',
-            'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions',
-            'seo_title', 'seo_description', 'category_ids', 'updated_at'
+            'species_name',
+            'scientific_name',
+            'description',
+            'price',
+            'stock_quantity',
+            'is_available',
+            'difficulty_level',
+            'min_tank_size_gallons',
+            'ph_range_min',
+            'ph_range_max',
+            'temperature_range_min',
+            'temperature_range_max',
+            'max_size_inches',
+            'lifespan_years',
+            'diet_type',
+            'compatibility_notes',
+            'care_instructions',
+            'seo_title',
+            'seo_description',
+            'category_ids',
+            'updated_at',
+            'product_type',
+            'hero_eligible',
+            'plant_category_id',
+            'botanical_name',
+            'plant_light_requirements',
+            'plant_growth_rate',
+            'plant_substrate_preference',
+            'plant_co2_requirement',
+            'plant_difficulty',
+            'plant_compatible_fauna',
+            'plant_care_notes',
+            'plant_max_height_cm',
+            'plant_spread_cm',
         ]
+        extra_kwargs = {
+            'botanical_name': {'required': False, 'allow_blank': True},
+            'plant_light_requirements': {'required': False, 'allow_blank': True},
+            'plant_growth_rate': {'required': False, 'allow_blank': True},
+            'plant_substrate_preference': {'required': False, 'allow_blank': True},
+            'plant_co2_requirement': {'required': False, 'allow_blank': True},
+            'plant_difficulty': {'required': False, 'allow_blank': True},
+            'plant_care_notes': {'required': False, 'allow_blank': True},
+        }
 
     def validate(self, attrs):
         ph_min = attrs.get('ph_range_min')
@@ -259,12 +432,37 @@ class ProductAdminUpdateSerializer(serializers.ModelSerializer):
                 "temperature_range": "temperature_range_min must be less than or equal to temperature_range_max"
             })
         
+        product_type = attrs.get('product_type', getattr(self.instance, 'product_type', 'fish'))
+        plant_category_id = self.initial_data.get('plant_category_id')
+        botanical_name = attrs.get('botanical_name')
+
+        if product_type == 'plant':
+            errors = {}
+            if not (botanical_name or getattr(self.instance, 'botanical_name', None)):
+                errors['botanical_name'] = "Botanical name is required for plant products."
+            if plant_category_id is None and not getattr(self.instance, 'plant_category_id', None):
+                errors['plant_category_id'] = "Plant products require a plant_category_id."
+            if errors:
+                raise serializers.ValidationError(errors)
+        
         return attrs
 
     def update(self, instance, validated_data):
         category_ids = validated_data.pop('category_ids', None)
+        plant_category_id = self.initial_data.get('plant_category_id')
+        compatible_fauna = validated_data.pop('plant_compatible_fauna', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+        if plant_category_id is not None:
+            if plant_category_id == '':
+                instance.plant_category = None
+            else:
+                try:
+                    instance.plant_category = PlantCategory.objects.get(id=plant_category_id)
+                except PlantCategory.DoesNotExist:
+                    raise serializers.ValidationError({"plant_category_id": "Invalid plant category."})
+        if compatible_fauna is not None:
+            instance.plant_compatible_fauna = compatible_fauna
         instance.save()
         if category_ids is not None:
             categories = Category.objects.filter(id__in=category_ids)
@@ -278,16 +476,55 @@ class ProductDetailAdminSerializer(serializers.ModelSerializer):
     images = ProductImageAdminSerializer(many=True, read_only=True, source='product_images')
     categories = serializers.SerializerMethodField()
     primary_image_url = serializers.SerializerMethodField()
+    plant_category = PlantCategorySummarySerializer(read_only=True)
+    plant_compatible_fauna = serializers.ListField(
+        child=serializers.CharField(),
+        source='plant_compatible_fauna',
+        read_only=True
+    )
 
     class Meta:
         model = FishProduct
         fields = [
-            'id', 'species_name', 'scientific_name', 'description', 'price', 'stock_quantity',
-            'is_available', 'difficulty_level', 'min_tank_size_gallons', 'ph_range_min',
-            'ph_range_max', 'temperature_range_min', 'temperature_range_max', 'max_size_inches',
-            'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions',
-            'image_url', 'primary_image_url', 'images', 'seo_title', 'seo_description',
-            'categories', 'created_at', 'updated_at'
+            'id',
+            'species_name',
+            'scientific_name',
+            'description',
+            'price',
+            'stock_quantity',
+            'is_available',
+            'difficulty_level',
+            'product_type',
+            'hero_eligible',
+            'min_tank_size_gallons',
+            'ph_range_min',
+            'ph_range_max',
+            'temperature_range_min',
+            'temperature_range_max',
+            'max_size_inches',
+            'lifespan_years',
+            'diet_type',
+            'compatibility_notes',
+            'care_instructions',
+            'image_url',
+            'primary_image_url',
+            'images',
+            'seo_title',
+            'seo_description',
+            'categories',
+            'plant_category',
+            'botanical_name',
+            'plant_light_requirements',
+            'plant_growth_rate',
+            'plant_substrate_preference',
+            'plant_co2_requirement',
+            'plant_difficulty',
+            'plant_compatible_fauna',
+            'plant_care_notes',
+            'plant_max_height_cm',
+            'plant_spread_cm',
+            'created_at',
+            'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 

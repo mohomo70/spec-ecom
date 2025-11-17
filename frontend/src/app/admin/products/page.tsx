@@ -26,6 +26,7 @@ export default function ProductsPage() {
     is_available: undefined as boolean | undefined,
     difficulty_level: "",
     diet_type: "",
+    product_type: "",
   });
 
   const { data, isLoading, error } = useQuery({
@@ -35,6 +36,7 @@ export default function ProductsPage() {
       if (filters.is_available !== undefined) params.is_available = filters.is_available;
       if (filters.difficulty_level) params.difficulty_level = filters.difficulty_level;
       if (filters.diet_type) params.diet_type = filters.diet_type;
+      if (filters.product_type) params.product_type = filters.product_type;
       const response = await adminApi.getProducts(params);
       return response;
     },
@@ -112,7 +114,7 @@ export default function ProductsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Products</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Manage fish products and inventory
+            Manage catalog products and inventory
           </p>
         </div>
         <Link href="/admin/products/new">
@@ -170,6 +172,21 @@ export default function ProductsPage() {
               { value: "herbivore", label: "Herbivore" },
               { value: "carnivore", label: "Carnivore" },
               { value: "omnivore", label: "Omnivore" },
+            ],
+          },
+          {
+            label: "Product Type",
+            name: "product_type",
+            value: filters.product_type,
+            onChange: (value) => {
+              setFilters({ ...filters, product_type: value });
+              setPage(1);
+            },
+            options: [
+              { value: "", label: "All Types" },
+              { value: "fish", label: "Fish" },
+              { value: "plant", label: "Plants" },
+              { value: "accessory", label: "Accessories" },
             ],
           },
         ]}

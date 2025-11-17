@@ -96,15 +96,62 @@ class Category(models.Model):
         return self.name
 
 
+class PlantCategory(models.Model):
+    """Plant-specific categories (carpeting, sword, stem, etc.)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'plant_categories'
+        ordering = ['display_order', 'name']
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        return super().save(*args, **kwargs)
+
+
 class FishProduct(models.Model):
     """Individual fish species/varieties available for sale."""
+    PRODUCT_TYPES = [
+        ('fish', 'Fish'),
+        ('plant', 'Plant'),
+        ('accessory', 'Accessory'),
+    ]
+    CO2_LEVELS = [
+        ('none', 'None'),
+        ('optional', 'Optional'),
+        ('recommended', 'Recommended'),
+    ]
+    GROWTH_RATES = [
+        ('slow', 'Slow'),
+        ('medium', 'Medium'),
+        ('fast', 'Fast'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='fish', db_index=True)
     species_name = models.CharField(max_length=100)
     scientific_name = models.CharField(max_length=150, blank=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     stock_quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     is_available = models.BooleanField(default=True)
+    hero_eligible = models.BooleanField(default=False, help_text="Eligible for homepage hero/quick-link promotion")
     difficulty_level = models.CharField(
         max_length=20,
         choices=[
@@ -140,13 +187,48 @@ class FishProduct(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     categories = models.ManyToManyField(Category, related_name='products', blank=True)
+    plant_category = models.ForeignKey(
+        PlantCategory,
+        related_name='products',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    botanical_name = models.CharField(max_length=150, blank=True)
+    plant_light_requirements = models.CharField(max_length=50, blank=True, help_text="e.g., low, medium, high")
+    plant_growth_rate = models.CharField(max_length=20, choices=GROWTH_RATES, blank=True)
+    plant_substrate_preference = models.CharField(max_length=50, blank=True)
+    plant_co2_requirement = models.CharField(max_length=20, choices=CO2_LEVELS, blank=True)
+    plant_difficulty = models.CharField(max_length=20, blank=True)
+    plant_compatible_fauna = models.JSONField(default=list, blank=True, help_text="List of compatible fish species")
+    plant_care_notes = models.TextField(blank=True)
+    plant_max_height_cm = models.IntegerField(null=True, blank=True)
+    plant_spread_cm = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = 'fish_products'
         ordering = ['species_name']
+        indexes = [
+            models.Index(fields=['product_type']),
+        ]
 
     def __str__(self):
+        if self.product_type == 'plant':
+            return self.botanical_name or self.species_name
         return f"{self.species_name} ({self.scientific_name or 'Unknown'})"
+
+    def clean(self):
+        super().clean()
+        if self.product_type == 'plant':
+            missing = []
+            if not self.botanical_name:
+                missing.append('botanical_name')
+            if not self.plant_category:
+                missing.append('plant_category')
+            if missing:
+                raise ValidationError(
+                    {'product_type': f"Plant products require {', '.join(missing)}."}
+                )
 
 
 class ShippingAddress(models.Model):

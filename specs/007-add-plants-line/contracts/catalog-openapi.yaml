@@ -1,0 +1,351 @@
+openapi: 3.0.3
+info:
+  title: Plant Catalog API
+  version: 1.0.0
+  description: REST contracts for aquarium plant admin + shopper flows.
+servers:
+  - url: https://api.spec-ecom.local/api/v1
+paths:
+  /admin/plant-categories:
+    get:
+      summary: List plant categories
+      tags: [Admin]
+      parameters:
+        - in: query
+          name: is_active
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Active categories with ordering metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlantCategory'
+    post:
+      summary: Create plant category
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantCategoryCreate'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantCategory'
+  /admin/plant-categories/{id}:
+    patch:
+      summary: Update plant category
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantCategoryUpdate'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantCategory'
+    delete:
+      summary: Archive plant category (only allowed when unused)
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '204':
+          description: Category archived
+        '409':
+          description: Category still assigned to products
+  /admin/products:
+    get:
+      summary: List products (supports product_type filter)
+      tags: [Admin]
+      parameters:
+        - in: query
+          name: product_type
+          schema:
+            type: string
+            enum: [fish, plant, accessory]
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: ordering
+          schema:
+            type: string
+            enum: [name, -name, created_at, -created_at]
+      responses:
+        '200':
+          description: Paged admin list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+    post:
+      summary: Create or update product (upsert)
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWritePayload'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+  /admin/products/{id}:
+    patch:
+      summary: Update existing product
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductWritePayload'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+  /catalog/products:
+    get:
+      summary: Public catalog listing
+      tags: [Catalog]
+      parameters:
+        - in: query
+          name: product_type
+          schema:
+            type: string
+            enum: [fish, plant, accessory]
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Shopper-visible list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+  /catalog/products/{slug}:
+    get:
+      summary: Product detail by slug
+      tags: [Catalog]
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Not found
+  /catalog/plant-categories:
+    get:
+      summary: Public plant category listing
+      tags: [Catalog]
+      responses:
+        '200':
+          description: Active categories for filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlantCategory'
+  /homepage/heroes:
+    get:
+      summary: Retrieve hero slots
+      tags: [Catalog]
+      parameters:
+        - in: query
+          name: variant
+          schema:
+            type: string
+            enum: [fish, plant, promo]
+      responses:
+        '200':
+          description: Active hero slot plus fallback
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hero:
+                    $ref: '#/components/schemas/HeroSlot'
+                  fallbackCollection:
+                    type: string
+
+components:
+  parameters:
+    CategoryId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+    ProductId:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    PlantCategory:
+      type: object
+      required: [id, name, slug, display_order, is_active]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        display_order: { type: integer }
+        is_active: { type: boolean }
+    PlantCategoryCreate:
+      type: object
+      required: [name, display_order]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        display_order: { type: integer }
+        is_active:
+          type: boolean
+          default: true
+    PlantCategoryUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        display_order: { type: integer }
+        is_active: { type: boolean }
+    Product:
+      type: object
+      required: [id, name, product_type, hero_eligible, inventory_quantity, status]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        subtitle: { type: string }
+        product_type:
+          type: string
+          enum: [fish, plant, accessory]
+        base_price: { type: number, format: float }
+        sale_price: { type: number, format: float, nullable: true }
+        currency: { type: string }
+        inventory_quantity: { type: integer }
+        hero_eligible: { type: boolean }
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string, format: uri }
+              alt: { type: string }
+        plant_attributes:
+          $ref: '#/components/schemas/PlantAttributes'
+        status:
+          type: string
+          enum: [draft, published, archived]
+        seo_meta:
+          $ref: '#/components/schemas/SeoMeta'
+    ProductWritePayload:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+      required: [name, product_type, base_price, inventory_quantity]
+    PlantAttributes:
+      type: object
+      required: [category_id, botanical_name, growth_rate, light_requirements]
+      properties:
+        category_id: { type: string, format: uuid }
+        botanical_name: { type: string }
+        growth_rate:
+          type: string
+          enum: [slow, medium, fast]
+        light_requirements:
+          type: string
+          enum: [low, medium, high]
+        substrate_preference:
+          type: string
+          enum: [sand, gravel, aquasoil, mixed]
+        co2_requirement:
+          type: string
+          enum: [none, optional, recommended]
+        difficulty:
+          type: string
+          enum: [easy, moderate, advanced]
+        compatible_fauna:
+          type: array
+          items: { type: string }
+        care_notes: { type: string }
+        max_height_cm: { type: integer }
+        spread_cm: { type: integer }
+    ProductListResponse:
+      type: object
+      properties:
+        count: { type: integer }
+        next: { type: string, nullable: true }
+        previous: { type: string, nullable: true }
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    SeoMeta:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        canonical_url: { type: string, format: uri }
+        og_image: { type: string, format: uri }
+    HeroSlot:
+      type: object
+      required: [id, variant, headline, cta_label, cta_href]
+      properties:
+        id: { type: string, format: uuid }
+        variant:
+          type: string
+          enum: [fish, plant, promo]
+        headline: { type: string }
+        subcopy: { type: string }
+        cta_label: { type: string }
+        cta_href: { type: string }
+        featured_product_id: { type: string, format: uuid, nullable: true }
+        fallback_collection_slug: { type: string }
+        media:
+          type: object
+          properties:
+            desktop: { type: string, format: uri }
+            mobile: { type: string, format: uri }
+

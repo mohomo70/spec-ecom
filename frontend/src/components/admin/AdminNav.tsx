@@ -13,6 +13,7 @@ export default function AdminNav() {
     { href: "/admin", label: "Dashboard" },
     { href: "/admin/products", label: "Products" },
     { href: "/admin/categories", label: "Categories" },
+    { href: "/admin/plant-categories", label: "Plant Categories" },
     { href: "/admin/orders", label: "Orders" },
     { href: "/admin/articles", label: "Articles" },
     { href: "/admin/users", label: "Users" },

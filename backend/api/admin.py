@@ -1,8 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    User, UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem,
-    ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
+    User,
+    UserProfile,
+    Category,
+    PlantCategory,
+    FishProduct,
+    ShippingAddress,
+    Order,
+    OrderItem,
+    ArticleCategory,
+    Article,
+    ProductImage,
+    CategoryImage,
+    ArticleImage,
 )
 
 
@@ -73,30 +84,64 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(FishProduct)
 class FishProductAdmin(admin.ModelAdmin):
     """Admin for FishProduct model."""
-    list_display = ['species_name', 'scientific_name', 'price', 'stock_quantity', 'is_available', 'difficulty_level']
-    list_filter = ['is_available', 'difficulty_level', 'diet_type', 'categories']
-    search_fields = ['species_name', 'scientific_name', 'description']
+    list_display = [
+        'species_name',
+        'scientific_name',
+        'product_type',
+        'price',
+        'stock_quantity',
+        'is_available',
+        'hero_eligible',
+    ]
+    list_filter = ['product_type', 'is_available', 'hero_eligible', 'difficulty_level', 'diet_type', 'categories', 'plant_category']
+    search_fields = ['species_name', 'scientific_name', 'description', 'botanical_name']
     filter_horizontal = ['categories']
     ordering = ['species_name']
     inlines = [ProductImageInline]
 
     fieldsets = (
         ('Basic Information', {
-            'fields': ('species_name', 'scientific_name', 'description', 'categories')
+            'fields': ('product_type', 'species_name', 'scientific_name', 'botanical_name', 'description', 'categories', 'plant_category')
         }),
         ('Pricing & Inventory', {
-            'fields': ('price', 'stock_quantity', 'is_available')
+            'fields': ('price', 'stock_quantity', 'is_available', 'hero_eligible')
         }),
         ('Fish Care Details', {
             'fields': ('difficulty_level', 'min_tank_size_gallons', 'ph_range_min', 'ph_range_max',
                       'temperature_range_min', 'temperature_range_max', 'max_size_inches',
-                      'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions')
+                      'lifespan_years', 'diet_type', 'compatibility_notes', 'care_instructions'),
+            'classes': ('collapse',)
+        }),
+        ('Plant Attributes', {
+            'fields': (
+                'plant_light_requirements',
+                'plant_growth_rate',
+                'plant_substrate_preference',
+                'plant_co2_requirement',
+                'plant_difficulty',
+                'plant_compatible_fauna',
+                'plant_care_notes',
+                'plant_max_height_cm',
+                'plant_spread_cm',
+            ),
+            'classes': ('collapse',)
         }),
         ('Media & SEO', {
             'fields': ('image_url', 'additional_images', 'seo_title', 'seo_description'),
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(PlantCategory)
+class PlantCategoryAdmin(admin.ModelAdmin):
+    """Admin for PlantCategory model."""
+
+    list_display = ['name', 'slug', 'display_order', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'slug', 'description']
+    ordering = ['display_order', 'name']
+    prepopulated_fields = {'slug': ('name',)}
 
 
 @admin.register(ShippingAddress)
