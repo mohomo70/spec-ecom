@@ -117,7 +117,7 @@ export default function ProductTable({
                 </td>
               )}
               <td className="px-6 py-4 whitespace-nowrap">
-                {product.primary_image_url ? (
+                {/* {product.primary_image_url ? (
                   <Image
                     src={product.primary_image_url}
                     alt={product.species_name}
@@ -129,7 +129,10 @@ export default function ProductTable({
                   <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
                     <span className="text-gray-400 text-xs">No image</span>
                   </div>
-                )}
+                )} */}
+                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                    <span className="text-gray-400 text-xs">No image</span>
+                  </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">

@@ -132,6 +132,14 @@ class ProductImageAdminSerializer(serializers.ModelSerializer, ImageURLMixin):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def get_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
+
 
 class ProductAdminSerializer(serializers.ModelSerializer):
     """Admin serializer for FishProduct - list view."""
@@ -307,6 +315,14 @@ class CategoryImageAdminSerializer(serializers.ModelSerializer, ImageURLMixin):
             'id', 'image', 'url', 'alt_text', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class CategoryAdminSerializer(serializers.ModelSerializer):
@@ -590,6 +606,14 @@ class ArticleImageAdminSerializer(serializers.ModelSerializer, ImageURLMixin):
             'id', 'image', 'url', 'alt_text', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_url(self, obj):
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class ArticleAdminSerializer(serializers.ModelSerializer):

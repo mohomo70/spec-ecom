@@ -1,30 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { adminApi } from "@/lib/api/admin";
+import { adminApi, type DashboardStats } from "@/lib/api/admin";
 import LoadingIndicator from "@/components/admin/LoadingIndicator";
 import ErrorMessage from "@/components/admin/ErrorMessage";
-
-interface DashboardStats {
-  total_products: number;
-  available_products: number;
-  total_orders: number;
-  pending_orders: number;
-  total_users: number;
-  active_users: number;
-  total_categories: number;
-  total_articles: number;
-  published_articles: number;
-  recent_orders_30d: number;
-  revenue_30d: number;
-}
 
 export default function DashboardStats() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "dashboard", "stats"],
     queryFn: async () => {
-      const response = await adminApi.getDashboardStats();
-      return response.data as DashboardStats;
+      const stats = await adminApi.getDashboardStats();
+      return stats;
     },
   });
 
@@ -41,50 +27,53 @@ export default function DashboardStats() {
     );
   }
 
-  if (!data) {
+  const statsData =
+    data && typeof data === "object" && "total_products" in data ? data : (data as any)?.data;
+
+  if (!statsData) {
     return null;
   }
 
   const stats = [
     {
       name: "Total Products",
-      value: data.total_products,
-      subtitle: `${data.available_products} available`,
+      value: statsData.total_products,
+      subtitle: `${statsData.available_products} available`,
       color: "blue",
     },
     {
       name: "Total Orders",
-      value: data.total_orders,
-      subtitle: `${data.pending_orders} pending`,
+      value: statsData.total_orders,
+      subtitle: `${statsData.pending_orders} pending`,
       color: "green",
     },
     {
       name: "Total Users",
-      value: data.total_users,
-      subtitle: `${data.active_users} active`,
+      value: statsData.total_users,
+      subtitle: `${statsData.active_users} active`,
       color: "purple",
     },
     {
       name: "Categories",
-      value: data.total_categories,
+      value: statsData.total_categories,
       subtitle: "Active categories",
       color: "yellow",
     },
     {
       name: "Articles",
-      value: data.total_articles,
-      subtitle: `${data.published_articles} published`,
+      value: statsData.total_articles,
+      subtitle: `${statsData.published_articles} published`,
       color: "indigo",
     },
     {
       name: "Recent Orders (30d)",
-      value: data.recent_orders_30d,
+      value: statsData.recent_orders_30d,
       subtitle: "Last 30 days",
       color: "pink",
     },
     {
       name: "Revenue (30d)",
-      value: `$${data.revenue_30d.toFixed(2)}`,
+      value: `$${statsData.revenue_30d.toFixed(2)}`,
       subtitle: "Last 30 days",
       color: "green",
     },

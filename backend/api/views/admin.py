@@ -269,6 +269,25 @@ class UserAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class UserProfileAdminViewSet(viewsets.ModelViewSet):
+    """Admin viewset for UserProfile management."""
+    
+    serializer_class = UserProfileAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminOnly]
+    
+    def get_queryset(self):
+        user_id = self.kwargs.get('user_id')
+        if user_id:
+            return UserProfile.objects.filter(user_id=user_id)
+        return UserProfile.objects.all()
+    
+    def get_object(self):
+        user_id = self.kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        return profile
+
+
 class ProductAdminViewSet(BulkOperationsMixin, viewsets.ModelViewSet):
     """Admin viewset for Product management."""
     

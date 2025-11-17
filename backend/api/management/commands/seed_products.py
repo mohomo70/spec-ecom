@@ -87,7 +87,7 @@ def load_sample_data():
             'seo_title': 'Neon Tetra Fish - Schooling Community Fish',
             'seo_description': 'Buy vibrant Neon Tetra fish online. Perfect for beginners, stunning blue and red stripes.',
             'categories': [categories['community-fish'], categories['tetras-barbs']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/neontetra.png',
         },
         {
             'species_name': 'Guppy',
@@ -153,7 +153,7 @@ def load_sample_data():
             'seo_title': 'Zebrafish - Active Striped Community Fish',
             'seo_description': 'Purchase Zebrafish online. Hardy, active swimmers with distinctive stripes.',
             'categories': [categories['community-fish'], categories['tetras-barbs']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/zebra.png',
         },
 
         # Cichlids
@@ -177,7 +177,7 @@ def load_sample_data():
             'seo_title': 'Angelfish - Elegant Freshwater Cichlids',
             'seo_description': 'Buy beautiful Angelfish online. Graceful swimmers with flowing fins.',
             'categories': [categories['cichlids']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/angel.png',
         },
         {
             'species_name': 'Convict Cichlid',
@@ -199,7 +199,7 @@ def load_sample_data():
             'seo_title': 'Convict Cichlid - Bold Striped Cichlids',
             'seo_description': 'Purchase Convict Cichlids online. Active, good parents, natural tank cleaners.',
             'categories': [categories['cichlids']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/convictcichild.png',
         },
 
         # Catfish
@@ -223,7 +223,7 @@ def load_sample_data():
             'seo_title': 'Corydoras Catfish - Peaceful Bottom Dwellers',
             'seo_description': 'Buy Corydoras catfish online. Peaceful scavengers that keep tanks clean.',
             'categories': [categories['catfish-bottom-dwellers']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/corydoras.png',
         },
         {
             'species_name': 'Plecostomus',
@@ -245,7 +245,7 @@ def load_sample_data():
             'seo_title': 'Plecostomus - Large Algae-Eating Catfish',
             'seo_description': 'Purchase Plecostomus catfish online. Natural algae eaters that grow large.',
             'categories': [categories['catfish-bottom-dwellers']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/Plecostomus.png',
         },
 
         # Goldfish
@@ -269,7 +269,7 @@ def load_sample_data():
             'seo_title': 'Fancy Goldfish - Beautiful Flowing Fin Varieties',
             'seo_description': 'Buy fancy Goldfish online. Oranda, Ryukin, Telescope varieties.',
             'categories': [categories['goldfish-koi']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/goldfish.png',
         },
         {
             'species_name': 'Shubunkin Goldfish',
@@ -291,7 +291,7 @@ def load_sample_data():
             'seo_title': 'Shubunkin Goldfish - Hardy Calico Goldfish',
             'seo_description': 'Purchase Shubunkin Goldfish online. Hardy, active swimmers with calico colors.',
             'categories': [categories['goldfish-koi']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/Shubunkin Goldfish.png',
         },
 
         # More Tetras
@@ -315,7 +315,7 @@ def load_sample_data():
             'seo_title': 'Cardinal Tetra Fish - Stunning Red and Blue Tetras',
             'seo_description': 'Buy Cardinal Tetra fish online. Beautiful red and blue colors, peaceful schooling fish.',
             'categories': [categories['tetras-barbs'], categories['community-fish']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/tetra.png',
         },
         {
             'species_name': 'Cherry Barb',
@@ -337,7 +337,7 @@ def load_sample_data():
             'seo_title': 'Cherry Barb Fish - Bright Red Schooling Fish',
             'seo_description': 'Purchase Cherry Barb fish online. Vibrant red color, peaceful and active.',
             'categories': [categories['tetras-barbs'], categories['community-fish']],
-            'image_path': None,
+            'image_path': 'products/2025/11/12/cherryBarb.png',
         },
     ]
 
@@ -385,14 +385,23 @@ def load_sample_data():
 
     # Create a superuser for admin access
     if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser(
+        admin_user = User.objects.create_superuser(
             username='admin',
             email='admin@example.com',
             password='admin123',
             first_name='Admin',
             last_name='User'
         )
-        print("Created superuser: admin/admin123")
+        admin_user.role = 'admin'
+        admin_user.save()
+        print("Created superuser: admin/admin123 (role: admin)")
+    else:
+        # Update existing admin user to have admin role
+        admin_user = User.objects.get(username='admin')
+        if admin_user.role != 'admin':
+            admin_user.role = 'admin'
+            admin_user.save()
+            print("Updated existing admin user role to 'admin'")
 
     print("Sample data loaded successfully!")
     print(f"Created {Category.objects.count()} categories")
