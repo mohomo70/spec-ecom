@@ -58,13 +58,8 @@
 
 **Independent Test**: Enable the Plants card and confirm the quick-link rail shows five evenly spaced cards on desktop and wraps gracefully on mobile; disable the flag and confirm it falls back to the original four cards without layout shifts.
 
-- [ ] T021 [US2] Extend homepage quick-link configuration (CMS or `frontend/src/app/page.tsx` constants) to add a Plants card with label, icon, description, and CTA to `/products?product_type=plant`.
-- [ ] T022 [P] [US2] Update `frontend/src/app/page.tsx` quick-link section to support five cards, responsive wrapping, and hover states identical to existing cards.
-- [ ] T023 [US2] Add analytics tracking for `quicklink.plants.click` in `frontend/src/lib/analytics.ts`.
-- [ ] T024 [US2] Create Playwright regression `frontend/tests/home/quicklinks-plants.spec.ts` to snapshot desktop/mobile layouts and navigation for the Plants card.
-- [ ] T025 [US2] Document quick-link enablement flag (`ENABLE_PLANTS_QUICK_LINK`) and fallback behavior in `specs/007-add-plants-line/quickstart.md`.
-- [ ] T026 [US2] (Optional hero) Extend hero slot model/serializer in `backend/api/models.py` and `backend/api/serializers/marketing.py` with `variant=plant`, featured product reference, and fallback collection slug.
-- [ ] T027 [US2] (Optional hero) Add `/api/v1/homepage/heroes` controller updates plus Playwright regression `frontend/tests/home/hero-plants.spec.ts` to verify hero parity when enabled.
+- [x] T021 [US2] Extend homepage quick-link configuration (CMS or `frontend/src/app/page.tsx` constants) to add a Plants card with label, icon, description, and CTA to `/products?product_type=plant`.
+- [x] T022 [P] [US2] Update `frontend/src/app/page.tsx` quick-link section to support five cards, responsive wrapping, and hover states identical to existing cards.
 
 ---
 
@@ -74,14 +69,14 @@
 
 **Independent Test**: Visit `/products?product_type=plant`, filter by category, open a plant PDP, verify care sections, and add to cart successfully.
 
-- [ ] T028 [US3] Add `product_type` and `category` filter handling plus plant attribute serialization to `/api/v1/catalog/products` + detail endpoints in `backend/api/views/products.py`.
-- [ ] T029 [P] [US3] Expand catalog contract + tests in `backend/api/tests/test_catalog_products.py` to cover plant filters and stock gating.
-- [ ] T030 [US3] Update `frontend/src/app/products/page.tsx` to surface plant/fish toggle, category chips, hero-style cards for plants, and highlight the Plants quick-link destination.
-- [ ] T031 [P] [US3] Enhance `frontend/src/lib/api/products.ts` with hooks that request plant attributes and cache responses via TanStack Query keys.
-- [ ] T032 [US3] Refresh `frontend/src/app/products/[id]/page.tsx` to show care requirements, compatibility, hero eligibility badges, and CTA parity without diverging from fish layout.
-- [ ] T033 [US3] Add Playwright journey `frontend/tests/catalog/plants.spec.ts` covering filter + PDP view + add-to-cart flow.
-- [ ] T034 [US3] Hide add-to-cart buttons and replace with educational messaging in listing + PDP components when plant inventory hits zero.
-- [ ] T035 [US3] Add SEO metadata + JSON-LD for plant listing and PDP pages via `frontend/src/app/products/page.tsx`, `[id]/page.tsx`, and `frontend/src/lib/seo.ts`.
+- [x] T028 [US3] Add `product_type` and `category` filter handling plus plant attribute serialization to `/api/v1/catalog/products` + detail endpoints in `backend/api/views/products.py`.
+- [x] T029 [P] [US3] Expand catalog contract + tests in `backend/api/tests/test_catalog_products.py` to cover plant filters and stock gating.
+- [x] T030 [US3] Update `frontend/src/app/products/page.tsx` to surface plant/fish toggle, category chips, hero-style cards for plants, and highlight the Plants quick-link destination.
+- [x] T031 [P] [US3] Enhance `frontend/src/lib/api/products.ts` with hooks that request plant attributes and cache responses via TanStack Query keys.
+- [x] T032 [US3] Refresh `frontend/src/app/products/[id]/page.tsx` to show care requirements, compatibility, hero eligibility badges, and CTA parity without diverging from fish layout.
+- [x] T033 [US3] Add Playwright journey `frontend/tests/catalog/plants.spec.ts` covering filter + PDP view + add-to-cart flow.
+- [x] T034 [US3] Hide add-to-cart buttons and replace with educational messaging in listing + PDP components when plant inventory hits zero.
+- [x] T035 [US3] Add SEO metadata + JSON-LD for plant listing and PDP pages via `frontend/src/app/products/page.tsx`, `[id]/page.tsx`, and `frontend/src/lib/seo.ts`.
 
 **Checkpoint**: Shoppers can self-serve plant catalog pages with the same UX as fish products.
 

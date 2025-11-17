@@ -22,6 +22,16 @@ export interface CatalogProduct {
   product_type: CatalogProductType;
   hero_eligible: boolean;
   min_tank_size_gallons: number;
+  categories?: Array<{ id: string; name: string; slug: string }>;
+  primary_image_url?: string;
+  images?: Array<{
+    id: string;
+    url: string;
+    is_primary: boolean;
+    display_order: number;
+    alt_text?: string;
+    caption?: string;
+  }>;
   plant_category?: CatalogPlantCategory | null;
   botanical_name?: string;
   plant_light_requirements?: string;
@@ -33,6 +43,9 @@ export interface CatalogProduct {
   plant_care_notes?: string;
   plant_max_height_cm?: number | null;
   plant_spread_cm?: number | null;
+  seo_title?: string;
+  seo_description?: string;
+  additional_images?: string[];
 }
 
 class ApiClient {

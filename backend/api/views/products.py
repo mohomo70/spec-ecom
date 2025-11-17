@@ -11,8 +11,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.db import transaction, DatabaseError, OperationalError
 import os
-from ..models import FishProduct, ProductImage
-from ..serializers import FishProductSerializer, ProductImageSerializer
+from ..models import FishProduct, PlantCategory, ProductImage
+from ..serializers import FishProductSerializer, PlantCategorySerializer, ProductImageSerializer
 from ..validators import validate_image_file
 from ..permissions import IsAdminOnly
 
@@ -436,3 +436,11 @@ class ProductImageUploadView(APIView):
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class PlantCategoryListView(generics.ListAPIView):
+    """Public list of active plant categories for catalog filters."""
+
+    serializer_class = PlantCategorySerializer
+    permission_classes = [AllowAny]
+    queryset = PlantCategory.objects.filter(is_active=True).order_by('display_order', 'name')

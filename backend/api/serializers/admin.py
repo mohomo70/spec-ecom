@@ -228,7 +228,7 @@ class ProductAdminSerializer(serializers.ModelSerializer):
 
 class ProductAdminCreateSerializer(serializers.ModelSerializer):
     """Admin serializer for creating products."""
-
+    
     category_ids = serializers.ListField(
         child=serializers.UUIDField(),
         write_only=True,
@@ -296,14 +296,14 @@ class ProductAdminCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "ph_range": "ph_range_min must be less than or equal to ph_range_max"
             })
-
+        
         temp_min = attrs.get('temperature_range_min')
         temp_max = attrs.get('temperature_range_max')
         if temp_min is not None and temp_max is not None and temp_min > temp_max:
             raise serializers.ValidationError({
                 "temperature_range": "temperature_range_min must be less than or equal to temperature_range_max"
             })
-
+        
         product_type = attrs.get('product_type', 'fish')
         plant_category_id = self.initial_data.get('plant_category_id')
         botanical_name = attrs.get('botanical_name') or self.initial_data.get('botanical_name')
@@ -444,7 +444,7 @@ class ProductAdminUpdateSerializer(serializers.ModelSerializer):
                 errors['plant_category_id'] = "Plant products require a plant_category_id."
             if errors:
                 raise serializers.ValidationError(errors)
-
+        
         return attrs
 
     def update(self, instance, validated_data):
