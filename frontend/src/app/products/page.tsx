@@ -275,9 +275,9 @@ function ProductsContent() {
                 <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
                   Hello {userName}, explore our {productType === "plant" ? "Aquarium Plants" : "Freshwater Fish"}
                 </h1>
-                <p className="text-white/80 text-sm md:text-base">
+                {/* <p className="text-white/80 text-sm md:text-base">
                   Toggle between fish and plants anytime—filters stay in sync.
-                </p>
+                </p> */}
               </div>
             </div>
             <div className="relative w-full max-w-md mx-auto md:mb-1">
@@ -321,9 +321,9 @@ function ProductsContent() {
                 {type === "fish" ? "Fish" : "Plants"}
               </Button>
             ))}
-            <Button variant="ghost" size="sm" onClick={() => setShowFilters(true)} className="ml-auto">
+            {/* <Button variant="ghost" size="sm" onClick={() => setShowFilters(true)} className="ml-auto">
               Advanced Filters
-            </Button>
+            </Button> */}
           </div>
 
           {productType === "plant" && (

@@ -102,7 +102,7 @@ export default function HomePage() {
                   label: "Aquascaping",
                   description: "Design better tanks",
                   icon: Palette,
-                  hideOnSmall: true,
+                  hideOnSmall: false,
                 },
                 {
                   key: "species",
@@ -149,61 +149,62 @@ export default function HomePage() {
       {/* Features */}
       <section className="py-12 md:py-20 bg-gradient-to-b from-white via-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
-              <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
-                  <Heart className="w-6 h-6 md:w-7 md:h-7 text-white" />
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
+                <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="relative">
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
+                    <Heart className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Expert Care</h3>
+                  <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
+                    Detailed care instructions for every fish species
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                    Each fish comes with comprehensive care guides, tank requirements,
+                    and compatibility information.
+                  </p>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Expert Care</h3>
-                <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
-                  Detailed care instructions for every fish species
-                </p>
-                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                  Each fish comes with comprehensive care guides, tank requirements,
-                  and compatibility information.
-                </p>
               </div>
-            </div>
 
-            <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
-              <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
-                  <Shield className="w-6 h-6 md:w-7 md:h-7 text-white" />
+              <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
+                <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="relative">
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
+                    <Shield className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Healthy Fish</h3>
+                  <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
+                    Only the highest quality, disease-free fish
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                    We quarantine and test all fish before shipping to ensure
+                    they arrive healthy and ready for your aquarium.
+                  </p>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Healthy Fish</h3>
-                <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
-                  Only the highest quality, disease-free fish
-                </p>
-                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                  We quarantine and test all fish before shipping to ensure
-                  they arrive healthy and ready for your aquarium.
-                </p>
               </div>
-            </div>
 
-            <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
-              <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-              <div className="relative">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
-                  <Truck className="w-6 h-6 md:w-7 md:h-7 text-white" />
+              <div className="group relative bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-1 md:hover:-translate-y-2">
+                <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-cyan-100 to-blue-100 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="relative">
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 md:mb-6 shadow-lg">
+                    <Truck className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Fast Shipping</h3>
+                  <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
+                    Live arrival guarantee with insulated packaging
+                  </p>
+                  <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
+                    Professional packaging and expedited shipping to get your
+                    fish to you quickly and safely.
+                  </p>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 md:mb-3">Fast Shipping</h3>
-                <p className="text-gray-600 mb-3 md:mb-4 leading-relaxed text-sm md:text-base">
-                  Live arrival guarantee with insulated packaging
-                </p>
-                <p className="text-xs md:text-sm text-gray-500 leading-relaxed">
-                  Professional packaging and expedited shipping to get your
-                  fish to you quickly and safely.
-                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-50">
         <div className="relative w-full mx-auto h-[115px]">
