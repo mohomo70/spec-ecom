@@ -33,11 +33,11 @@
 
 ### Core Principles Compliance (Post-Design)
 
-- **Performance-First**: [Status] - [Brief justification based on design choices]
-- **SEO-Optimized**: [Status] - [Brief justification based on design choices]
-- **Security-First**: [Status] - [Brief justification based on design choices]
-- **Scalable Architecture**: [Status] - [Brief justification based on design choices]
-- **API Contract Standards**: [Status] - [Brief justification based on design choices]
+- **Full-Stack Contract (Next.js + Django)**: [Status] - [Brief justification based on design choices]
+- **Catalog Integrity & Filterable Data**: [Status] - [Brief justification based on design choices]
+- **Content & SEO Source of Truth**: [Status] - [Brief justification based on design choices]
+- **Secure Auth & Admin Guardrails**: [Status] - [Brief justification based on design choices]
+- **Manual VPS Delivery & Runtime Reliability**: [Status] - [Brief justification based on design choices]
 
 ### Design Artifacts Quality Check
 
