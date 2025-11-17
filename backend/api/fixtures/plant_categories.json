@@ -1,0 +1,33 @@
+[
+  {
+    "model": "api.plantcategory",
+    "fields": {
+      "name": "Carpeting Plants",
+      "slug": "carpeting-plants",
+      "description": "Low-growing aquatic plants ideal for creating lush foreground carpets.",
+      "display_order": 1,
+      "is_active": true
+    }
+  },
+  {
+    "model": "api.plantcategory",
+    "fields": {
+      "name": "Sword Plants",
+      "slug": "sword-plants",
+      "description": "Rosette-style plants such as Amazon swords that dominate the midground.",
+      "display_order": 2,
+      "is_active": true
+    }
+  },
+  {
+    "model": "api.plantcategory",
+    "fields": {
+      "name": "Stem Plants",
+      "slug": "stem-plants",
+      "description": "Fast-growing stems perfect for background density and nutrient control.",
+      "display_order": 3,
+      "is_active": true
+    }
+  }
+]
+

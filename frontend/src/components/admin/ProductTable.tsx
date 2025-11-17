@@ -84,6 +84,9 @@ export default function ProductTable({
               Species Name
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Type
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Scientific Name
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -138,9 +141,22 @@ export default function ProductTable({
                 <div className="text-sm font-medium text-gray-900">
                   {product.species_name}
                 </div>
+                {product.botanical_name && product.product_type === "plant" && (
+                  <div className="text-xs text-gray-500">{product.botanical_name}</div>
+                )}
                 {product.category_names && product.category_names.length > 0 && (
                   <div className="text-sm text-gray-500">
                     {product.category_names.join(", ")}
+                  </div>
+                )}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800 capitalize">
+                  {product.product_type}
+                </span>
+                {product.product_type === "plant" && product.plant_category && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {product.plant_category.name}
                   </div>
                 )}
               </td>
@@ -165,6 +181,11 @@ export default function ProductTable({
                 >
                   {product.is_available ? "Available" : "Unavailable"}
                 </span>
+                {product.hero_eligible && (
+                  <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+                    Hero
+                  </span>
+                )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">

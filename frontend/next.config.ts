@@ -27,6 +27,9 @@ const nextConfig: NextConfig = {
     ],
     domains: ['localhost', 'images.unsplash.com'],
   },
+  env: {
+    NEXT_PUBLIC_PLANTS_ENABLED: process.env.PLANTS_ENABLED ?? "false",
+  },
 };
 
 export default nextConfig;
