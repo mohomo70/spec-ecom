@@ -6,7 +6,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils.html import strip_tags
 import bleach
-from .models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
+from ..models import UserProfile, Category, FishProduct, ShippingAddress, Order, OrderItem, ArticleCategory, Article, ProductImage, CategoryImage, ArticleImage
 
 User = get_user_model()
 
@@ -526,3 +526,4 @@ class ArticleImageSerializer(serializers.ModelSerializer, ImageURLMixin):
         extra_kwargs = {
             'image': {'required': True},
         }
+
